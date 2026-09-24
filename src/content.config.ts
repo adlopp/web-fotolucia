@@ -34,6 +34,7 @@ const blog = defineCollection({
     fecha: z.coerce.date(),
     portada: z.string().nullish(),
     resumen: z.string().nullish(),
+    oculta: z.boolean().nullish(),
   }),
 });
 

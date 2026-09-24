@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import IconoTraducirIA from "../components/IconoTraducirIA.astro";
+import "easymde/dist/easymde.min.css";
 ---
 
 <Base titulo="Administración" noindex>
@@ -120,12 +121,56 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
     <div class="vista" data-vista="blog" hidden>
       <div class="vista-cabecera">
         <h2>Blog</h2>
-        <span class="etiqueta-obra">En construcción</span>
+        <button type="button" class="boton principal" id="nueva-entrada">+ Añadir entrada</button>
       </div>
-      <div class="opciones-blog">
-        <button type="button" class="boton" disabled>+ Añadir entrada</button>
-        <button type="button" class="boton" disabled>Modificar entrada</button>
-        <button type="button" class="boton" disabled>Borrar entrada</button>
+      <ul class="lista" id="lista-blog"></ul>
+    </div>
+
+    <!-- 2b. Modificar entrada -->
+    <div class="vista" data-vista="editar-entrada" hidden>
+      <button type="button" class="volver" id="volver-blog">← Blog</button>
+      <h2 id="entrada-titulo-visor"></h2>
+
+      <label class="campo">
+        Título
+        <input id="entrada-titulo" />
+      </label>
+
+      <div class="campos-nombre">
+        <label class="campo">
+          Fecha
+          <input id="entrada-fecha" type="date" />
+        </label>
+        <label class="campo">
+          Resumen (sale en el listado del blog)
+          <input id="entrada-resumen" placeholder="Una o dos frases" />
+        </label>
+      </div>
+
+      <div class="vista-cabecera">
+        <h3>Fotografía principal</h3>
+      </div>
+      <div class="portada-entrada">
+        <div class="portada-marco" id="entrada-portada-marco">
+          <span class="suave">Sin foto</span>
+        </div>
+        <div class="portada-botones">
+          <label class="boton">
+            Cambiar imagen
+            <input type="file" id="entrada-subir-portada" accept="image/*" hidden />
+          </label>
+          <button type="button" class="boton" id="entrada-quitar-portada" hidden>Quitar</button>
+        </div>
+      </div>
+
+      <div class="vista-cabecera">
+        <h3>Texto</h3>
+      </div>
+      <textarea id="entrada-cuerpo"></textarea>
+
+      <div class="acciones">
+        <button type="button" class="boton" id="entrada-cancelar">Cancelar</button>
+        <button type="button" class="boton principal" id="entrada-guardar">Guardar cambios</button>
       </div>
     </div>
   </section>
@@ -139,6 +184,22 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
         <input name="nombre" required />
       </label>
       <p class="error" id="error-nombre"></p>
+      <div class="acciones">
+        <button type="button" class="boton" value="cancelar" data-cerrar>Cancelar</button>
+        <button type="submit" class="boton principal" value="ok">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: nueva entrada del blog -->
+  <dialog id="dialogo-entrada" class="dialogo">
+    <form method="dialog">
+      <h3>Nueva entrada</h3>
+      <label class="campo">
+        Título
+        <input name="titulo" required />
+      </label>
+      <p class="error" id="error-entrada"></p>
       <div class="acciones">
         <button type="button" class="boton" value="cancelar" data-cerrar>Cancelar</button>
         <button type="submit" class="boton principal" value="ok">Crear</button>
@@ -195,6 +256,11 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
 </Base>
 
 <style is:global>
+  /* El atributo hidden debe ganar siempre, aunque la clase (p. ej. .boton) fije su propio display */
+  [hidden] {
+    display: none !important;
+  }
+
   .suave {
     color: var(--suave);
   }
@@ -701,20 +767,86 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
     margin-top: 32px;
   }
 
-  /* Blog */
-  .etiqueta-obra {
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    background: var(--aviso-fondo);
-    color: var(--aviso-texto);
-    padding: 4px 10px;
+  /* Fotografía principal de una entrada del blog */
+  .portada-entrada {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 8px;
   }
 
-  .opciones-blog {
+  .portada-marco {
+    width: 160px;
+    height: 110px;
+    flex-shrink: 0;
+    background: var(--linea);
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .portada-marco img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .portada-botones {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Editor de texto (EasyMDE), a juego con el resto del panel */
+  #entrada-cuerpo {
+    display: none; /* EasyMDE lo sustituye por su propio editor */
+  }
+
+  .EasyMDEContainer .CodeMirror {
+    border: 1px solid var(--linea);
+    background: var(--campo);
+    color: var(--texto);
+    font-family: var(--sans);
+    font-size: 1rem;
+    min-height: 320px;
+  }
+
+  .EasyMDEContainer .CodeMirror-cursor {
+    border-color: var(--texto);
+  }
+
+  .EasyMDEContainer .editor-toolbar {
+    border: 1px solid var(--linea);
+    border-bottom: 0;
+    background: var(--campo);
+    opacity: 1;
+  }
+
+  .EasyMDEContainer .editor-toolbar button {
+    color: var(--texto) !important;
+  }
+
+  .EasyMDEContainer .editor-toolbar button:hover,
+  .EasyMDEContainer .editor-toolbar button.active {
+    background: var(--linea);
+    border-color: var(--linea);
+  }
+
+  .EasyMDEContainer .editor-toolbar i.separator {
+    border-color: var(--linea);
+  }
+
+  .EasyMDEContainer .editor-preview,
+  .EasyMDEContainer .editor-preview-side {
+    background: var(--fondo);
+    color: var(--texto);
+  }
+
+  .EasyMDEContainer .editor-statusbar {
+    color: var(--suave);
   }
 
   /* Diálogos */

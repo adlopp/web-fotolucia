@@ -2,6 +2,7 @@ import credenciales from "./credenciales.json";
 import { descifrar, type Credenciales, type Secreto } from "./cripto";
 import { almacenGitHub, almacenLocal, textoABase64, type Almacen, type Cambio } from "./almacen";
 import Sortable from "sortablejs";
+import EasyMDE from "easymde";
 
 type Foto = {
   imagen: string;
@@ -26,7 +27,20 @@ type Categoria = {
 // Foto en edición: las nuevas llevan el archivo ya reducido, pendiente de guardar
 type FotoEdicion = Foto & { nueva?: { base64: string; vista: string } };
 
+type Entrada = {
+  slug: string;
+  datos: {
+    titulo: string;
+    fecha: string; // ISO
+    portada?: string | null;
+    resumen?: string | null;
+    oculta?: boolean | null;
+    cuerpo: string; // el texto, en Markdown
+  };
+};
+
 const DIR_CATEGORIAS = "content/categorias";
+const DIR_BLOG = "content/blog";
 const CLAVE_SESION = "panel-admin";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const LOCAL = import.meta.env.DEV;
@@ -37,6 +51,12 @@ let almacen: Almacen;
 let secreto: Secreto;
 let categorias: Categoria[] = [];
 let editando: { original: Categoria; fotos: FotoEdicion[] } | null = null;
+let entradas: Entrada[] = [];
+let editandoEntrada: {
+  original: Entrada;
+  portada: string; // ruta final ("" = sin foto)
+  portadaNueva?: { base64: string; vista: string }; // pendiente de subir
+} | null = null;
 
 // ---------- utilidades ----------
 
@@ -100,6 +120,44 @@ async function prepararImagen(archivo: File) {
 }
 
 const jsonCategoria = (c: Categoria["datos"]) => textoABase64(JSON.stringify(c, null, 2) + "\n");
+
+// Lectura y escritura de los archivos .md del blog: unas líneas de datos («frontmatter»,
+// entre --- y ---) y debajo el texto en Markdown.
+const valorYaml = (v: unknown) => JSON.stringify(String(v ?? "")); // entre comillas: evita líos con : o acentos
+
+function serializarEntrada(d: Entrada["datos"]): string {
+  const lineas = [`titulo: ${valorYaml(d.titulo)}`, `fecha: ${valorYaml(d.fecha)}`];
+  if (d.portada) lineas.push(`portada: ${valorYaml(d.portada)}`);
+  if (d.resumen) lineas.push(`resumen: ${valorYaml(d.resumen)}`);
+  if (d.oculta) lineas.push(`oculta: true`);
+  return `---\n${lineas.join("\n")}\n---\n\n${d.cuerpo.trim()}\n`;
+}
+
+function analizarEntrada(texto: string): Entrada["datos"] {
+  const m = texto.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  const datos: Record<string, string | boolean> = {};
+  (m?.[1] ?? "").split(/\r?\n/).forEach((linea) => {
+    const im = linea.match(/^([a-zA-Z]+):\s*(.*)$/);
+    if (!im) return;
+    const [, clave, bruto] = im;
+    if (bruto === "true" || bruto === "false") datos[clave] = bruto === "true";
+    else if (/^".*"$/.test(bruto)) {
+      try {
+        datos[clave] = JSON.parse(bruto);
+      } catch {
+        datos[clave] = bruto;
+      }
+    } else datos[clave] = bruto;
+  });
+  return {
+    titulo: String(datos.titulo ?? ""),
+    fecha: String(datos.fecha ?? new Date().toISOString()),
+    portada: String(datos.portada ?? ""),
+    resumen: String(datos.resumen ?? ""),
+    oculta: !!datos.oculta,
+    cuerpo: (m?.[2] ?? "").trim(),
+  };
+}
 
 // Iconos de plantilla: ojo abierto/cerrado (mostrar/ocultar foto) y puntos de arrastre
 const ICONO_OJO = `
@@ -177,7 +235,7 @@ async function entrar(s: Secreto) {
     estado("✗ Falta configurar el token de GitHub (npm run configurar-admin). No se podrán guardar cambios.", "mal");
   }
   mostrarVista("categorias");
-  await cargarCategorias();
+  await Promise.all([cargarCategorias(), cargarEntradas()]);
 }
 
 // La pantalla de acceso también respeta el idioma elegido con la bandera (antes de entrar)
@@ -216,7 +274,7 @@ $("#cerrar-panel").addEventListener("click", () => {
 
 function mostrarVista(nombre: string) {
   document.querySelectorAll<HTMLElement>(".vista").forEach((v) => (v.hidden = v.dataset.vista !== nombre));
-  const pestana = nombre === "editar" ? "categorias" : nombre;
+  const pestana = nombre === "editar" ? "categorias" : nombre === "editar-entrada" ? "blog" : nombre;
   document
     .querySelectorAll<HTMLButtonElement>(".pestanas [data-vista]")
     .forEach((b) => b.classList.toggle("activa", b.dataset.vista === pestana));
@@ -225,6 +283,7 @@ function mostrarVista(nombre: string) {
 document.querySelectorAll<HTMLButtonElement>(".pestanas [data-vista]").forEach((b) =>
   b.addEventListener("click", () => {
     editando = null;
+    editandoEntrada = null;
     estado("");
     mostrarVista(b.dataset.vista!);
   })
@@ -626,6 +685,277 @@ $("#editar-guardar").addEventListener("click", async () => {
     editando = null;
     pintarCategorias();
     mostrarVista("categorias");
+    estado(MSG_PUBLICADO, "ok");
+  }
+});
+
+// ---------- blog ----------
+// Funciona igual que las categorías (Modificar / Ocultar / Eliminar), pero cada entrada tiene
+// una sola foto principal en vez de una galería, y el orden es siempre por fecha (no se puede
+// arrastrar para reordenar).
+
+const ordenarEntradas = (es: Entrada[]) =>
+  [...es].sort(
+    (a, b) =>
+      Number(!!a.datos.oculta) - Number(!!b.datos.oculta) ||
+      new Date(b.datos.fecha).getTime() - new Date(a.datos.fecha).getTime()
+  );
+
+async function cargarEntradas() {
+  const lista = $("#lista-blog");
+  lista.innerHTML = `<li class="suave">Cargando…</li>`;
+  try {
+    const archivos = await almacen.listar(DIR_BLOG);
+    entradas = ordenarEntradas(
+      archivos
+        .filter((a) => a.ruta.endsWith(".md"))
+        .map((a) => ({ slug: a.ruta.split("/").pop()!.replace(/\.md$/, ""), datos: analizarEntrada(a.contenido) }))
+    );
+    pintarEntradas();
+  } catch (e) {
+    lista.innerHTML = "";
+    estado(`✗ No se han podido cargar las entradas: ${(e as Error).message}`, "mal");
+  }
+}
+
+function pintarEntradas() {
+  const lista = $("#lista-blog");
+  if (!entradas.length) {
+    lista.innerHTML = `<li class="suave">Todavía no hay entradas.</li>`;
+    return;
+  }
+  lista.innerHTML = entradas
+    .map((e, i) => {
+      const oculta = !!e.datos.oculta;
+      const fecha = new Date(e.datos.fecha).toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      return `<li class="${oculta ? "fila-oculta" : ""}" data-slug="${e.slug}">
+        ${e.datos.portada ? `<img src="${escapar(urlImagen(e.datos.portada))}" alt="" loading="lazy" />` : `<span class="sin-foto"></span>`}
+        <div class="info">
+          <span class="nombre">${escapar(e.datos.titulo)}${oculta ? ` <span class="etiqueta-oculta">Oculta</span>` : ""}</span>
+          <span class="contador">${fecha}</span>
+        </div>
+        <div class="botones">
+          <button type="button" class="boton" data-editar-entrada="${i}">Modificar</button>
+          <button type="button" class="boton" data-ocultar-entrada="${i}">${oculta ? "Mostrar" : "Ocultar"}</button>
+          <button type="button" class="boton peligro" data-eliminar-entrada="${i}">Eliminar</button>
+        </div>
+      </li>`;
+    })
+    .join("");
+  lista.querySelectorAll<HTMLButtonElement>("[data-editar-entrada]").forEach((b) =>
+    b.addEventListener("click", () => abrirEdicionEntrada(entradas[Number(b.dataset.editarEntrada)]))
+  );
+  lista.querySelectorAll<HTMLButtonElement>("[data-ocultar-entrada]").forEach((b) =>
+    b.addEventListener("click", () => alternarOcultarEntrada(entradas[Number(b.dataset.ocultarEntrada)]))
+  );
+  lista.querySelectorAll<HTMLButtonElement>("[data-eliminar-entrada]").forEach((b) =>
+    b.addEventListener("click", () => eliminarEntrada(entradas[Number(b.dataset.eliminarEntrada)]))
+  );
+}
+
+// Ocultar/mostrar
+async function alternarOcultarEntrada(e: Entrada) {
+  const oculta = !e.datos.oculta;
+  const datos: Entrada["datos"] = { ...e.datos, oculta };
+  const ok = await conEstado(oculta ? "Ocultando…" : "Mostrando…", () =>
+    almacen.guardar(
+      [{ ruta: `${DIR_BLOG}/${e.slug}.md`, base64: textoABase64(serializarEntrada(datos)) }],
+      `${oculta ? "Ocultar" : "Mostrar"} entrada: ${e.datos.titulo}`
+    )
+  );
+  if (ok) {
+    estado(`${MSG_PUBLICADO} «${e.datos.titulo}» ${oculta ? "oculta" : "visible de nuevo"}.`, "ok");
+    e.datos = datos;
+    entradas = ordenarEntradas(entradas);
+    pintarEntradas();
+  }
+}
+
+// Añadir
+const dialogoEntrada = $<HTMLDialogElement>("#dialogo-entrada");
+$("#nueva-entrada").addEventListener("click", () => {
+  dialogoEntrada.querySelector("form")!.reset();
+  $("#error-entrada").textContent = "";
+  dialogoEntrada.showModal();
+});
+
+dialogoEntrada.querySelector("form")!.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const titulo = String(new FormData(e.currentTarget as HTMLFormElement).get("titulo")).trim();
+  const slug = slugify(titulo);
+  if (!slug) {
+    $("#error-entrada").textContent = "Escribe un título.";
+    return;
+  }
+  if (entradas.some((o) => o.slug === slug)) {
+    $("#error-entrada").textContent = "Ya existe una entrada con ese título.";
+    return;
+  }
+  dialogoEntrada.close();
+  const nueva: Entrada = {
+    slug,
+    datos: { titulo, fecha: new Date().toISOString(), portada: "", resumen: "", cuerpo: "" },
+  };
+  const ok = await conEstado("Creando entrada…", () =>
+    almacen.guardar(
+      [{ ruta: `${DIR_BLOG}/${slug}.md`, base64: textoABase64(serializarEntrada(nueva.datos)) }],
+      `Nueva entrada: ${titulo}`
+    )
+  );
+  if (ok) {
+    estado(`${MSG_PUBLICADO} Ahora puedes escribirla.`, "ok");
+    entradas = ordenarEntradas([...entradas, nueva]);
+    pintarEntradas();
+    abrirEdicionEntrada(nueva);
+  }
+});
+
+// Eliminar
+async function eliminarEntrada(e: Entrada) {
+  const seguro = await confirmar(
+    `¿Estás segura de que quieres eliminar «${e.datos.titulo}»?`,
+    "Se borrará la entrada del blog. No se puede deshacer."
+  );
+  if (!seguro) return;
+  const cambios: Cambio[] = [{ ruta: `${DIR_BLOG}/${e.slug}.md`, base64: null }];
+  if (e.datos.portada && e.datos.portada.startsWith("/uploads/")) {
+    const usada = entradas.some((o) => o.slug !== e.slug && o.datos.portada === e.datos.portada);
+    if (!usada) cambios.push({ ruta: rutaRepo(e.datos.portada), base64: null });
+  }
+  const ok = await conEstado("Eliminando…", () => almacen.guardar(cambios, `Eliminar entrada: ${e.datos.titulo}`));
+  if (ok) {
+    estado(`${MSG_PUBLICADO} «${e.datos.titulo}» eliminada.`, "ok");
+    entradas = entradas.filter((o) => o.slug !== e.slug);
+    pintarEntradas();
+  }
+}
+
+// El editor de texto (una sola vez; cada entrada solo cambia lo que contiene)
+const entradaMde = new EasyMDE({
+  element: $<HTMLTextAreaElement>("#entrada-cuerpo"),
+  spellChecker: false,
+  status: ["lines", "words"],
+  placeholder: "Escribe aquí la entrada…",
+  toolbar: ["bold", "italic", "heading-2", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "guide"],
+});
+
+function pintarPortadaEntrada() {
+  if (!editandoEntrada) return;
+  const { portada, portadaNueva } = editandoEntrada;
+  $("#entrada-portada-marco").innerHTML = portada
+    ? `<img src="${escapar(portadaNueva?.vista ?? urlImagen(portada))}" alt="" />`
+    : `<span class="suave">Sin foto</span>`;
+  $<HTMLButtonElement>("#entrada-quitar-portada").hidden = !portada;
+}
+
+$<HTMLInputElement>("#entrada-subir-portada").addEventListener("change", async (e) => {
+  const input = e.currentTarget as HTMLInputElement;
+  const archivo = input.files?.[0];
+  input.value = "";
+  if (!editandoEntrada || !archivo) return;
+  try {
+    const nueva = await prepararImagen(archivo);
+    const nombre = `${slugify(archivo.name.replace(/\.[^.]+$/, "")) || "portada"}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}.jpg`;
+    editandoEntrada.portada = `/uploads/blog/${nombre}`;
+    editandoEntrada.portadaNueva = nueva;
+    pintarPortadaEntrada();
+  } catch {
+    estado("✗ No se ha podido leer esa imagen.", "mal");
+  }
+});
+
+$("#entrada-quitar-portada").addEventListener("click", () => {
+  if (!editandoEntrada) return;
+  editandoEntrada.portada = "";
+  editandoEntrada.portadaNueva = undefined;
+  pintarPortadaEntrada();
+});
+
+// Modificar
+function abrirEdicionEntrada(e: Entrada) {
+  editandoEntrada = { original: e, portada: e.datos.portada ?? "" };
+  $("#entrada-titulo-visor").textContent = e.datos.titulo;
+  $<HTMLInputElement>("#entrada-titulo").value = e.datos.titulo;
+  $<HTMLInputElement>("#entrada-fecha").value = e.datos.fecha.slice(0, 10);
+  $<HTMLInputElement>("#entrada-resumen").value = e.datos.resumen ?? "";
+  pintarPortadaEntrada();
+  entradaMde.value(e.datos.cuerpo);
+  mostrarVista("editar-entrada");
+  entradaMde.codemirror.refresh(); // el editor se dibuja mal si estaba oculto al crearse
+}
+
+$("#volver-blog").addEventListener("click", salirEdicionEntrada);
+$("#entrada-cancelar").addEventListener("click", salirEdicionEntrada);
+
+function hayCambiosEntrada() {
+  if (!editandoEntrada) return false;
+  return (
+    $<HTMLInputElement>("#entrada-titulo").value.trim() !== editandoEntrada.original.datos.titulo ||
+    $<HTMLInputElement>("#entrada-fecha").value !== editandoEntrada.original.datos.fecha.slice(0, 10) ||
+    $<HTMLInputElement>("#entrada-resumen").value.trim() !== (editandoEntrada.original.datos.resumen ?? "") ||
+    editandoEntrada.portada !== (editandoEntrada.original.datos.portada ?? "") ||
+    entradaMde.value().trim() !== editandoEntrada.original.datos.cuerpo.trim()
+  );
+}
+
+function salirEdicionEntrada() {
+  if (hayCambiosEntrada() && !window.confirm("Hay cambios sin guardar. ¿Salir igualmente?")) return;
+  editandoEntrada = null;
+  estado("");
+  mostrarVista("blog");
+}
+
+$("#entrada-guardar").addEventListener("click", async () => {
+  if (!editandoEntrada) return;
+  const { original } = editandoEntrada;
+  const titulo = $<HTMLInputElement>("#entrada-titulo").value.trim();
+  const fechaInput = $<HTMLInputElement>("#entrada-fecha").value;
+  const resumen = $<HTMLInputElement>("#entrada-resumen").value.trim();
+  const cuerpo = entradaMde.value().trim();
+  const slug = slugify(titulo);
+  if (!slug) {
+    estado("✗ El título no puede estar vacío.", "mal");
+    return;
+  }
+  if (!fechaInput) {
+    estado("✗ Pon una fecha.", "mal");
+    return;
+  }
+  if (slug !== original.slug && entradas.some((e) => e.slug === slug)) {
+    estado("✗ Ya existe otra entrada con ese título.", "mal");
+    return;
+  }
+
+  const datos: Entrada["datos"] = {
+    ...original.datos,
+    titulo,
+    fecha: `${fechaInput}T10:00:00.000Z`,
+    resumen: resumen || "",
+    portada: editandoEntrada.portada || "",
+    cuerpo,
+  };
+  const cambios: Cambio[] = [];
+  if (editandoEntrada.portadaNueva) {
+    cambios.push({ ruta: rutaRepo(editandoEntrada.portada), base64: editandoEntrada.portadaNueva.base64 });
+  }
+  const portadaAnterior = original.datos.portada;
+  if (portadaAnterior && portadaAnterior !== editandoEntrada.portada && portadaAnterior.startsWith("/uploads/")) {
+    const usada = entradas.some((e) => e.slug !== original.slug && e.datos.portada === portadaAnterior);
+    if (!usada) cambios.push({ ruta: rutaRepo(portadaAnterior), base64: null });
+  }
+  cambios.push({ ruta: `${DIR_BLOG}/${slug}.md`, base64: textoABase64(serializarEntrada(datos)) });
+  if (slug !== original.slug) cambios.push({ ruta: `${DIR_BLOG}/${original.slug}.md`, base64: null });
+
+  const ok = await conEstado("Guardando…", () => almacen.guardar(cambios, `Modificar entrada: ${titulo}`));
+  if (ok) {
+    entradas = ordenarEntradas(entradas.map((e) => (e.slug === original.slug ? { slug, datos } : e)));
+    editandoEntrada = null;
+    pintarEntradas();
+    mostrarVista("blog");
     estado(MSG_PUBLICADO, "ok");
   }
 });

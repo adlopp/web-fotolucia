@@ -9,9 +9,10 @@ export async function categoriasOrdenadas() {
     .sort((a, b) => (a.data.orden ?? 99) - (b.data.orden ?? 99) || a.data.titulo.localeCompare(b.data.titulo));
 }
 
+// Las entradas marcadas como «ocultas» desde el panel no se enseñan en la web pública
 export async function entradasOrdenadas() {
   const posts = await getCollection("blog");
-  return posts.sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
+  return posts.filter((p) => !p.data.oculta).sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
 }
 
 // Portada de la categoría: la primera foto que no esté oculta (si no hay, la portada guardada)
