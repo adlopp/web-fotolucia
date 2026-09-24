@@ -4,12 +4,37 @@ import { SITE } from "../site";
 ---
 
 <Base titulo="Contacto">
+  <script is:inline src="https://accounts.google.com/gsi/client" async defer></script>
+
   <section class="intro">
     <h1 data-en="Contact">Contacto</h1>
     <p data-en="Write to me if you'd like to know more about my work or commission some photos.">
       Escríbeme si quieres saber algo de mi trabajo o encargarme unas fotos.
     </p>
   </section>
+
+  <!-- El bloque de Google va FUERA del <form>: así nada de lo que pinte Google (o cualquier
+       botón sin type="button") puede disparar un envío del formulario por accidente. El correo
+       verificado se añade a mano al enviar (ver el script, más abajo). -->
+  <div class="campo">
+    <span data-en="Email (verified with Google)">Correo (verificado con Google)</span>
+    <div id="google-pendiente">
+      <div id="google-boton"></div>
+      <p class="ayuda" data-en="Sign in with Google so I can send you a reply — this way I know it's a real address.">
+        Inicia sesión con Google para poder enviarte una respuesta: así sé que el correo es real.
+      </p>
+    </div>
+    <div id="google-hecho" class="google-hecho" hidden>
+      <p class="google-correo">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          ></path>
+        </svg>
+        <span id="google-correo-texto"></span>
+      </p>
+      <button type="button" class="enlace" id="google-cambiar" data-en="Change account">Cambiar de cuenta</button>
+    </div>
+  </div>
 
   <form id="form-contacto" class="formulario" action={SITE.formulario} method="POST">
     <!-- Trampa para robots: invisible para personas, los bots suelen rellenarlo igualmente -->
@@ -21,10 +46,6 @@ import { SITE } from "../site";
     <label class="campo">
       <span data-en="Name">Nombre</span>
       <input type="text" name="name" autocomplete="name" required />
-    </label>
-    <label class="campo">
-      <span data-en="Email (so I can reply to you)">Correo (para poder responderte)</span>
-      <input type="email" name="email" autocomplete="email" required />
     </label>
     <label class="campo">
       <span data-en="Message">Mensaje</span>
@@ -39,7 +60,7 @@ import { SITE } from "../site";
 <style>
   .formulario {
     max-width: 520px;
-    margin-top: 8px;
+    margin-top: 22px;
     display: flex;
     flex-direction: column;
     gap: 22px;
@@ -57,6 +78,7 @@ import { SITE } from "../site";
     display: flex;
     flex-direction: column;
     gap: 6px;
+    max-width: 520px;
     font-size: 0.78rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -124,6 +146,55 @@ import { SITE } from "../site";
   .estado.mal {
     color: var(--peligro);
   }
+
+  .ayuda {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--suave);
+  }
+
+  #google-boton {
+    margin-top: 4px;
+  }
+
+  .google-hecho {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .google-correo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--exito);
+    font-size: 1rem;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .enlace {
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--suave);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .enlace:hover {
+    color: var(--texto);
+  }
 </style>
 
 <script>
@@ -134,12 +205,77 @@ import { SITE } from "../site";
   const boton = form.querySelector("button")!;
   const enIngles = () => document.documentElement.dataset.idioma === "en";
 
+  // ---------- inicio de sesión con Google (correo verificado) ----------
+  const pendiente = document.getElementById("google-pendiente")!;
+  const hecho = document.getElementById("google-hecho")!;
+  const correoTexto = document.getElementById("google-correo-texto")!;
+  let correoVerificado = "";
+
+  // El token que da Google son tres trozos separados por ".": solo se lee el de en medio
+  // (los datos), en el navegador, sin enviarlo a ningún sitio.
+  function leerCorreoDelToken(token: string): string {
+    const payload = token.split(".")[1];
+    const json = decodeURIComponent(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+        .split("")
+        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+        .join("")
+    );
+    return JSON.parse(json).email ?? "";
+  }
+
+  function mostrarVerificado(correo: string) {
+    correoVerificado = correo;
+    correoTexto.textContent = correo;
+    pendiente.hidden = true;
+    hecho.hidden = false;
+  }
+
+  function mostrarPendiente() {
+    correoVerificado = "";
+    pendiente.hidden = false;
+    hecho.hidden = true;
+  }
+
+  function iniciarGoogle() {
+    const google = (window as any).google;
+    if (!google) {
+      setTimeout(iniciarGoogle, 150);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: SITE.googleClientId,
+      callback: (respuesta: { credential: string }) => mostrarVerificado(leerCorreoDelToken(respuesta.credential)),
+    });
+    google.accounts.id.renderButton(document.getElementById("google-boton"), {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      locale: enIngles() ? "en" : "es",
+    });
+  }
+  if (!SITE.googleClientId.includes("REEMPLAZAR")) iniciarGoogle();
+
+  document.getElementById("google-cambiar")!.addEventListener("click", () => {
+    (window as any).google?.accounts.id.disableAutoSelect();
+    mostrarPendiente();
+  });
+
+  // ---------- enviar el formulario ----------
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (SITE.formulario.includes("REEMPLAZAR")) {
+    if (SITE.formulario.includes("REEMPLAZAR") || SITE.googleClientId.includes("REEMPLAZAR")) {
       estado.textContent = enIngles()
         ? "The form isn't set up yet. Please write to " + SITE.correo
         : "El formulario todavía no está configurado. Escribe a " + SITE.correo;
+      estado.className = "estado mal";
+      return;
+    }
+    if (!correoVerificado) {
+      estado.textContent = enIngles()
+        ? "Please sign in with Google first, so I know your email is real."
+        : "Antes tienes que iniciar sesión con Google, para saber que el correo es real.";
       estado.className = "estado mal";
       return;
     }
@@ -147,13 +283,16 @@ import { SITE } from "../site";
     estado.className = "estado";
     estado.textContent = enIngles() ? "Sending…" : "Enviando…";
     try {
+      const datos = new FormData(form);
+      datos.set("email", correoVerificado); // el correo no vive en el formulario, se añade aquí
       const res = await fetch(form.action, {
         method: "POST",
         headers: { Accept: "application/json" },
-        body: new FormData(form),
+        body: datos,
       });
       if (!res.ok) throw new Error();
       form.reset();
+      mostrarPendiente();
       estado.textContent = enIngles() ? "✓ Message sent. Thank you!" : "✓ Mensaje enviado. ¡Gracias!";
       estado.classList.add("ok");
     } catch {

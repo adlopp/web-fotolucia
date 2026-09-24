@@ -38,6 +38,12 @@ body {
   box-sizing: border-box;
 }
 
+/* El atributo hidden debe ganar siempre, aunque una clase (display:flex, display:grid…) fije
+   su propio display — si no, un elemento oculto puede acabar viéndose igualmente */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }

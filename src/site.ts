@@ -9,6 +9,13 @@ export const SITE = {
   // y pega aquí su dirección (algo como "https://formspree.io/f/xxxxxxxx"). Hasta entonces el
   // formulario no puede enviar mensajes.
   formulario: "https://formspree.io/f/REEMPLAZAR",
+  // Inicio de sesión con Google, para que el correo de quien escribe sea siempre real (verificado
+  // por Google) y no algo que cualquiera pueda inventarse. Se crea gratis en
+  // https://console.cloud.google.com/apis/credentials → «Crear credenciales» → «ID de cliente de
+  // OAuth» → tipo «Aplicación web» → en «Orígenes de JavaScript autorizados» añade
+  // http://localhost:4321 y https://fotolucia.github.io. Pega aquí el ID que te da (termina en
+  // ".apps.googleusercontent.com"). Hasta entonces el formulario no puede enviarse.
+  googleClientId: "REEMPLAZAR.apps.googleusercontent.com",
 };
 
 // Añade la subcarpeta de GitHub Pages a enlaces e imágenes, si la hay: url("/blog")
