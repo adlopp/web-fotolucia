@@ -2,7 +2,7 @@
 import { render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { entradasOrdenadas } from "../../lib";
-import { formatoFecha, url } from "../../site";
+import { formatoFecha, formatoFechaEn, url } from "../../site";
 
 export async function getStaticPaths() {
   const entradas = await entradasOrdenadas();
@@ -19,7 +19,7 @@ const { Content } = await render(entrada);
     <header>
       <a href={url("/blog")} class="etiqueta volver">← Blog</a>
       <h1>{titulo}</h1>
-      <time class="etiqueta" datetime={fecha.toISOString()}>{formatoFecha(fecha)}</time>
+      <time class="etiqueta" datetime={fecha.toISOString()} data-en={formatoFechaEn(fecha)}>{formatoFecha(fecha)}</time>
     </header>
 
     {portada && <img class="portada" src={url(portada)} alt="" />}

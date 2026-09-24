@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { SITE, url } from "../site";
 import IconosTema from "../components/IconosTema.astro";
+import IconosIdioma from "../components/IconosIdioma.astro";
 
 interface Props {
   titulo?: string;
@@ -50,9 +51,12 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
         {SITE.nombre}<span>{SITE.subtitulo}</span>
       </a>
       <nav>
-        <a href={url("/")} class:list={{ activo: esFotografias }}>Fotografías</a>
+        <a href={url("/")} class:list={{ activo: esFotografias }} data-en="Photography">Fotografías</a>
         <a href={url("/blog")} class:list={{ activo: activo("/blog") }}>Blog</a>
-        <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }}>Contacto</a>
+        <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }} data-en="Contact">Contacto</a>
+        <button type="button" class="icono idioma" id="cambiar-idioma" data-cambiar-idioma>
+          <IconosIdioma />
+        </button>
         <button type="button" class="icono tema" id="cambiar-tema" data-cambiar-tema>
           <IconosTema />
         </button>
@@ -94,8 +98,8 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
         </a>
       </p>
       <p>
-        <a href={url("/")}>Fotografías</a> · <a href={url("/blog")}>Blog</a> ·
-        <a href={url("/contacto")}>Contacto</a>
+        <a href={url("/")} data-en="Photography">Fotografías</a> · <a href={url("/blog")}>Blog</a> ·
+        <a href={url("/contacto")} data-en="Contact">Contacto</a>
       </p>
     </footer>
 
@@ -113,6 +117,41 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
         const mismaPagina = sinBarra(location.pathname) === sinBarra(new URL(logo.href).pathname);
         if (mismaPagina) location.reload();
         else location.href = logo.href;
+      });
+
+      // Traducción al inglés (bandera). Traduce los textos fijos de la web y los nombres en
+      // inglés puestos en el panel (categorías). El resto del contenido (blog, descripciones,
+      // pies de foto) sigue en español. Se recuerda mientras la pestaña esté abierta.
+      const CLAVE_IDIOMA = "idioma";
+      const botonIdioma = document.getElementById("cambiar-idioma")!;
+      function aplicarIdioma(idioma: string) {
+        const en = idioma === "en";
+        document.documentElement.lang = en ? "en" : "es";
+        document.documentElement.dataset.idioma = en ? "en" : "es";
+        document.querySelectorAll<HTMLElement>("[data-en]").forEach((el) => {
+          if (el.dataset.esTexto === undefined) el.dataset.esTexto = el.textContent ?? "";
+          el.textContent = en ? el.dataset.en || el.dataset.esTexto : el.dataset.esTexto;
+        });
+        document.querySelectorAll<HTMLElement>("[data-en-label]").forEach((el) => {
+          if (el.dataset.esLabel === undefined) el.dataset.esLabel = el.getAttribute("aria-label") ?? "";
+          const texto = en ? el.dataset.enLabel || el.dataset.esLabel : el.dataset.esLabel;
+          el.setAttribute("aria-label", texto);
+          el.title = texto;
+        });
+        botonIdioma.setAttribute("aria-label", en ? "Volver al español" : "Traducir a inglés");
+        botonIdioma.title = en ? "Volver al español" : "Traducir a inglés";
+      }
+      let idiomaGuardado = "es";
+      try {
+        idiomaGuardado = sessionStorage.getItem(CLAVE_IDIOMA) || "es";
+      } catch {}
+      aplicarIdioma(idiomaGuardado);
+      botonIdioma.addEventListener("click", () => {
+        const nuevo = document.documentElement.dataset.idioma === "en" ? "es" : "en";
+        try {
+          sessionStorage.setItem(CLAVE_IDIOMA, nuevo);
+        } catch {}
+        aplicarIdioma(nuevo);
       });
 
       // Botón de modo nocturno

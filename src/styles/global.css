@@ -270,3 +270,14 @@ h3 {
 [data-tema="oscuro"] .tema .sol {
   display: block;
 }
+
+/* Bandera del Reino Unido si la web está en español (pulsarla traduce), de España si está en
+   inglés (pulsarla la devuelve al español) */
+.idioma .bandera-es,
+[data-idioma="en"] .idioma .bandera-uk {
+  display: none;
+}
+
+[data-idioma="en"] .idioma .bandera-es {
+  display: block;
+}

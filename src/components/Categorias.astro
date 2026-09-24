@@ -14,8 +14,8 @@ const categorias = await categoriasOrdenadas();
           )}
         </div>
         <div class="texto">
-          <h2>{c.data.titulo}</h2>
-          <span class="etiqueta">{c.data.fotos.length} fotos</span>
+          <h2 data-en={c.data.tituloEn || c.data.titulo}>{c.data.titulo}</h2>
+          <span class="etiqueta" data-en={`${c.data.fotos.length} ${c.data.fotos.length === 1 ? "photo" : "photos"}`}>{c.data.fotos.length} fotos</span>
         </div>
       </a>
     ))

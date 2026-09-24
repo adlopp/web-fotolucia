@@ -13,3 +13,7 @@ export const url = (ruta: string) => `${BASE}${ruta}`;
 
 export const formatoFecha = (d: Date) =>
   d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+
+// Para el botón de traducción (bandera)
+export const formatoFechaEn = (d: Date) =>
+  d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });

@@ -6,7 +6,14 @@ import Sortable from "sortablejs";
 type Foto = { imagen: string; titulo?: string | null; pie?: string | null };
 type Categoria = {
   slug: string;
-  datos: { titulo: string; descripcion?: string | null; portada?: string | null; orden?: number | null; fotos: Foto[] };
+  datos: {
+    titulo: string;
+    tituloEn?: string | null;
+    descripcion?: string | null;
+    portada?: string | null;
+    orden?: number | null;
+    fotos: Foto[];
+  };
 };
 // Foto en edición: las nuevas llevan el archivo ya reducido, pendiente de guardar
 type FotoEdicion = Foto & { nueva?: { base64: string; vista: string } };
@@ -282,6 +289,7 @@ function abrirEdicion(c: Categoria) {
   editando = { original: c, fotos: c.datos.fotos.map((f) => ({ ...f })) };
   $("#editar-titulo").textContent = c.datos.titulo;
   $<HTMLInputElement>("#editar-nombre").value = c.datos.titulo;
+  $<HTMLInputElement>("#editar-nombre-en").value = c.datos.tituloEn ?? "";
   pintarFotos();
   mostrarVista("editar");
 }
@@ -392,6 +400,7 @@ function hayCambios() {
   const limpiar = (fotos: FotoEdicion[]) => JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? ""]));
   return (
     $<HTMLInputElement>("#editar-nombre").value.trim() !== editando.original.datos.titulo ||
+    $<HTMLInputElement>("#editar-nombre-en").value.trim() !== (editando.original.datos.tituloEn ?? "") ||
     limpiar(editando.fotos) !== limpiar(editando.original.datos.fotos)
   );
 }
@@ -407,6 +416,7 @@ $("#editar-guardar").addEventListener("click", async () => {
   if (!editando) return;
   const { original, fotos } = editando;
   const titulo = $<HTMLInputElement>("#editar-nombre").value.trim();
+  const tituloEn = $<HTMLInputElement>("#editar-nombre-en").value.trim();
   const slug = slugify(titulo);
   if (!slug) {
     estado("✗ El nombre no puede estar vacío.", "mal");
@@ -427,6 +437,7 @@ $("#editar-guardar").addEventListener("click", async () => {
   const datos: Categoria["datos"] = {
     ...original.datos,
     titulo,
+    tituloEn: tituloEn || "",
     portada,
     fotos: fotos.map(({ nueva, ...f }) => f),
   };

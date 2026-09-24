@@ -9,10 +9,10 @@ const entradas = await entradasOrdenadas();
 <Base titulo="Blog">
   <section class="intro">
     <h1>Blog</h1>
-    <p>Viajes, técnica y las historias detrás de las fotos.</p>
+    <p data-en="Travel, technique and the stories behind the photos.">Viajes, técnica y las historias detrás de las fotos.</p>
   </section>
 
-  {entradas.length === 0 && <p>Aún no hay entradas.</p>}
+  {entradas.length === 0 && <p data-en="No entries yet.">Aún no hay entradas.</p>}
 
   <div class="entradas">
     {entradas.map((e) => <TarjetaEntrada entrada={e} />)}

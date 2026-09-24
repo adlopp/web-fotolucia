@@ -51,10 +51,16 @@ import Base from "../layouts/Base.astro";
       <button type="button" class="volver" id="volver-categorias">← Categorías</button>
       <h2 id="editar-titulo"></h2>
 
-      <label class="campo">
-        Nombre de la categoría
-        <input id="editar-nombre" />
-      </label>
+      <div class="campos-nombre">
+        <label class="campo">
+          Nombre (español)
+          <input id="editar-nombre" />
+        </label>
+        <label class="campo">
+          Nombre (inglés)
+          <input id="editar-nombre-en" placeholder="Igual que en español" />
+        </label>
+      </div>
 
       <div class="vista-cabecera">
         <h3>Fotos <span class="suave" id="editar-contador"></span></h3>
@@ -398,6 +404,17 @@ import Base from "../layouts/Base.astro";
   .campo {
     max-width: 420px;
     margin: 24px 0 8px;
+  }
+
+  .campos-nombre {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .campos-nombre .campo {
+    flex: 1;
+    min-width: 200px;
   }
 
   .fotos {

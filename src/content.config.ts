@@ -6,6 +6,7 @@ const categorias = defineCollection({
   loader: glob({ pattern: "*.json", base: "./content/categorias" }),
   schema: z.object({
     titulo: z.string(),
+    tituloEn: z.string().nullish(),
     descripcion: z.string().nullish(),
     portada: z.string().nullish(),
     orden: z.number().nullish(),

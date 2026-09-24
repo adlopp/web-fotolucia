@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { formatoFecha, url } from "../site";
+import { formatoFecha, formatoFechaEn, url } from "../site";
 
 interface Props {
   entrada: CollectionEntry<"blog">;
@@ -13,7 +13,7 @@ const { titulo, fecha, portada, resumen } = entrada.data;
   <div class="marco">
     {portada && <img src={url(portada)} alt="" loading="lazy" />}
   </div>
-  <time class="etiqueta" datetime={fecha.toISOString()}>{formatoFecha(fecha)}</time>
+  <time class="etiqueta" datetime={fecha.toISOString()} data-en={formatoFechaEn(fecha)}>{formatoFecha(fecha)}</time>
   <h3>{titulo}</h3>
   {resumen && <p>{resumen}</p>}
 </a>

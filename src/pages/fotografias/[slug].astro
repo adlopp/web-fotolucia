@@ -12,17 +12,17 @@ export async function getStaticPaths() {
 }
 
 const { categoria, siguiente } = Astro.props;
-const { titulo, descripcion, fotos } = categoria.data;
+const { titulo, tituloEn, descripcion, fotos } = categoria.data;
 ---
 
 <Base titulo={titulo} descripcion={descripcion ?? undefined}>
   <section class="intro">
-    <a href={url("/")} class="etiqueta volver">← Fotografías</a>
-    <h1>{titulo}</h1>
+    <a href={url("/")} class="etiqueta volver" data-en="← Photography">← Fotografías</a>
+    <h1 data-en={tituloEn || titulo}>{titulo}</h1>
     {descripcion && <p>{descripcion}</p>}
   </section>
 
-  {fotos.length === 0 && <p class="vacio">Todavía no hay fotos en esta categoría.</p>}
+  {fotos.length === 0 && <p class="vacio" data-en="No photos in this collection yet.">Todavía no hay fotos en esta categoría.</p>}
 
   <div class="galeria">
     {
@@ -45,8 +45,12 @@ const { titulo, descripcion, fotos } = categoria.data;
   {
     siguiente.id !== categoria.id && (
       <div class="seccion-titulo">
-        <span class="etiqueta">Siguiente colección</span>
-        <a href={url(`/fotografias/${siguiente.id}`)} class="enlace-flecha">
+        <span class="etiqueta" data-en="Next collection">Siguiente colección</span>
+        <a
+          href={url(`/fotografias/${siguiente.id}`)}
+          class="enlace-flecha"
+          data-en={`${siguiente.data.tituloEn || siguiente.data.titulo} →`}
+        >
           {siguiente.data.titulo} →
         </a>
       </div>
@@ -54,14 +58,14 @@ const { titulo, descripcion, fotos } = categoria.data;
   }
 
   <!-- Visor a pantalla completa -->
-  <dialog class="visor" aria-label="Visor de fotos">
-    <button type="button" class="cerrar" aria-label="Cerrar">✕</button>
-    <button type="button" class="nav anterior" aria-label="Anterior">‹</button>
+  <dialog class="visor" aria-label="Visor de fotos" data-en-label="Photo viewer">
+    <button type="button" class="cerrar" aria-label="Cerrar" data-en-label="Close">✕</button>
+    <button type="button" class="nav anterior" aria-label="Anterior" data-en-label="Previous">‹</button>
     <figure>
       <img src="" alt="" />
       <figcaption></figcaption>
     </figure>
-    <button type="button" class="nav siguiente" aria-label="Siguiente">›</button>
+    <button type="button" class="nav siguiente" aria-label="Siguiente" data-en-label="Next">›</button>
   </dialog>
 
   <script type="application/json" id="datos-fotos" set:html={JSON.stringify(fotos.map((f) => ({ ...f, imagen: url(f.imagen) })))} />
