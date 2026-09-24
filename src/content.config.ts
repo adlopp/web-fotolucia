@@ -9,6 +9,7 @@ const categorias = defineCollection({
     tituloEn: z.string().nullish(),
     descripcion: z.string().nullish(),
     descripcionEn: z.string().nullish(),
+    oculta: z.boolean().nullish(),
     portada: z.string().nullish(),
     orden: z.number().nullish(),
     fotos: z
@@ -18,6 +19,7 @@ const categorias = defineCollection({
           titulo: z.string().nullish(),
           tituloEn: z.string().nullish(),
           pie: z.string().nullish(),
+          oculta: z.boolean().nullish(),
         })
       )
       .nullish()

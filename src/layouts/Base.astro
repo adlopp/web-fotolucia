@@ -44,6 +44,16 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
         document.documentElement.dataset.tema = tema === "oscuro" ? "oscuro" : "claro";
       })();
     </script>
+    <!-- Candado abierto si hay una sesión del panel abierta en esta pestaña -->
+    <script is:inline>
+      (function () {
+        var sesion = null;
+        try {
+          sesion = sessionStorage.getItem("panel-admin");
+        } catch (e) {}
+        document.documentElement.dataset.sesion = sesion ? "dentro" : "fuera";
+      })();
+    </script>
   </head>
   <body>
     <header class="cabecera">
@@ -62,13 +72,22 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
         </button>
         <a
           href={url("/admin")}
-          class:list={["icono", { activo: activo("/admin") }]}
+          class:list={["icono", "candado", { activo: activo("/admin") }]}
           aria-label="Administración"
           title="Administración"
         >
-          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+          <svg class="cerrado" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
             <rect x="5" y="11" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
             <path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+          </svg>
+          <svg class="abierto" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
+            <path
+              d="M8 11V8a4 4 0 0 1 7.7-1.4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"></path>
           </svg>
         </a>
       </nav>

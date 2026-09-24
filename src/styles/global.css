@@ -292,3 +292,16 @@ h3 {
 [data-idioma="en"] .idioma .bandera-es {
   display: block;
 }
+
+/* Candado: abierto mientras haya una sesión del panel iniciada en esta pestaña */
+.candado .abierto {
+  display: none;
+}
+
+[data-sesion="dentro"] .candado .abierto {
+  display: block;
+}
+
+[data-sesion="dentro"] .candado .cerrado {
+  display: none;
+}

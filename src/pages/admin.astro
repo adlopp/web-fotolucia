@@ -443,6 +443,24 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
     border-bottom: 1px solid var(--linea);
   }
 
+  .lista li.fila-oculta {
+    opacity: 0.55;
+  }
+
+  .etiqueta-oculta {
+    display: inline-block;
+    vertical-align: middle;
+    font-family: var(--sans);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--suave);
+    border: 1px solid var(--linea);
+    border-radius: 2px;
+    padding: 2px 6px;
+    margin-left: 4px;
+  }
+
   .lista img,
   .lista .sin-foto {
     width: 64px;
@@ -630,6 +648,47 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
   .fotos .quitar:hover {
     background: var(--peligro);
     color: var(--fondo);
+  }
+
+  /* Ojo: a la izquierda de la X, oculta o muestra esa foto en la web */
+  .fotos .ojo {
+    position: absolute;
+    right: 42px;
+    top: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  .fotos .ojo:hover {
+    background: var(--texto);
+    color: var(--fondo);
+  }
+
+  .fotos .ojo .cerrado {
+    display: none;
+  }
+
+  .fotos .foto-oculta .ojo .abierto {
+    display: none;
+  }
+
+  .fotos .foto-oculta .ojo .cerrado {
+    display: block;
+  }
+
+  /* Foto oculta: en gris y algo más tenue */
+  .fotos .foto-oculta .miniatura img {
+    filter: grayscale(1);
+    opacity: 0.55;
   }
 
   .acciones {

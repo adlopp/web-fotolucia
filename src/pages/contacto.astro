@@ -1,10 +1,168 @@
 ---
 import Base from "../layouts/Base.astro";
+import { SITE } from "../site";
 ---
 
 <Base titulo="Contacto">
   <section class="intro">
     <h1 data-en="Contact">Contacto</h1>
-    <p data-en="Coming soon.">Próximamente.</p>
+    <p data-en="Write to me if you'd like to know more about my work or commission some photos.">
+      Escríbeme si quieres saber algo de mi trabajo o encargarme unas fotos.
+    </p>
   </section>
+
+  <form id="form-contacto" class="formulario" action={SITE.formulario} method="POST">
+    <!-- Trampa para robots: invisible para personas, los bots suelen rellenarlo igualmente -->
+    <label class="trampa" aria-hidden="true">
+      No rellenar este campo
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" />
+    </label>
+
+    <label class="campo">
+      <span data-en="Name">Nombre</span>
+      <input type="text" name="name" autocomplete="name" required />
+    </label>
+    <label class="campo">
+      <span data-en="Email (so I can reply to you)">Correo (para poder responderte)</span>
+      <input type="email" name="email" autocomplete="email" required />
+    </label>
+    <label class="campo">
+      <span data-en="Message">Mensaje</span>
+      <textarea name="message" rows="6" required></textarea>
+    </label>
+
+    <p class="estado" id="estado-contacto" role="status"></p>
+    <button type="submit" class="boton" data-en="Send">Enviar</button>
+  </form>
 </Base>
+
+<style>
+  .formulario {
+    max-width: 520px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .trampa {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--suave);
+  }
+
+  input,
+  textarea {
+    font: inherit;
+    font-size: 1rem;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--texto);
+    padding: 12px 14px;
+    border: 1px solid var(--linea);
+    background: var(--campo);
+    border-radius: 2px;
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: 2px solid var(--texto);
+    outline-offset: -1px;
+  }
+
+  .boton {
+    align-self: flex-start;
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border: 1px solid var(--texto);
+    background: var(--texto);
+    color: var(--fondo);
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  .boton:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  .boton:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .estado {
+    margin: 0;
+    min-height: 1.4em;
+    font-size: 0.92rem;
+  }
+
+  .estado.ok {
+    color: var(--exito);
+  }
+
+  .estado.mal {
+    color: var(--peligro);
+  }
+</style>
+
+<script>
+  import { SITE } from "../site";
+
+  const form = document.getElementById("form-contacto") as HTMLFormElement;
+  const estado = document.getElementById("estado-contacto")!;
+  const boton = form.querySelector("button")!;
+  const enIngles = () => document.documentElement.dataset.idioma === "en";
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (SITE.formulario.includes("REEMPLAZAR")) {
+      estado.textContent = enIngles()
+        ? "The form isn't set up yet. Please write to " + SITE.correo
+        : "El formulario todavía no está configurado. Escribe a " + SITE.correo;
+      estado.className = "estado mal";
+      return;
+    }
+    boton.disabled = true;
+    estado.className = "estado";
+    estado.textContent = enIngles() ? "Sending…" : "Enviando…";
+    try {
+      const res = await fetch(form.action, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: new FormData(form),
+      });
+      if (!res.ok) throw new Error();
+      form.reset();
+      estado.textContent = enIngles() ? "✓ Message sent. Thank you!" : "✓ Mensaje enviado. ¡Gracias!";
+      estado.classList.add("ok");
+    } catch {
+      estado.textContent = enIngles()
+        ? `✗ Something went wrong. Please try again, or write to ${SITE.correo}.`
+        : `✗ Algo ha fallado. Inténtalo de nuevo, o escribe a ${SITE.correo}.`;
+      estado.classList.add("mal");
+    } finally {
+      boton.disabled = false;
+    }
+  });
+</script>

@@ -12,7 +12,9 @@ export async function getStaticPaths() {
 }
 
 const { categoria, siguiente } = Astro.props;
-const { titulo, tituloEn, descripcion, descripcionEn, fotos } = categoria.data;
+const { titulo, tituloEn, descripcion, descripcionEn, fotos: todasLasFotos } = categoria.data;
+// Las fotos ocultas desde el panel no se enseñan en la web pública
+const fotos = todasLasFotos.filter((f) => !f.oculta);
 ---
 
 <Base titulo={titulo} descripcion={descripcion ?? undefined}>

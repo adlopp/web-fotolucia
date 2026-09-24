@@ -3,7 +3,13 @@ import { descifrar, type Credenciales, type Secreto } from "./cripto";
 import { almacenGitHub, almacenLocal, textoABase64, type Almacen, type Cambio } from "./almacen";
 import Sortable from "sortablejs";
 
-type Foto = { imagen: string; titulo?: string | null; tituloEn?: string | null; pie?: string | null };
+type Foto = {
+  imagen: string;
+  titulo?: string | null;
+  tituloEn?: string | null;
+  pie?: string | null;
+  oculta?: boolean | null;
+};
 type Categoria = {
   slug: string;
   datos: {
@@ -11,6 +17,7 @@ type Categoria = {
     tituloEn?: string | null;
     descripcion?: string | null;
     descripcionEn?: string | null;
+    oculta?: boolean | null;
     portada?: string | null;
     orden?: number | null;
     fotos: Foto[];
@@ -94,6 +101,27 @@ async function prepararImagen(archivo: File) {
 
 const jsonCategoria = (c: Categoria["datos"]) => textoABase64(JSON.stringify(c, null, 2) + "\n");
 
+// Iconos de plantilla: ojo abierto/cerrado (mostrar/ocultar foto) y puntos de arrastre
+const ICONO_OJO = `
+  <svg class="abierto" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+    <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path>
+    <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+  </svg>
+  <svg class="cerrado" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+    <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path>
+    <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+    <path d="M4 4l16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+  </svg>`;
+
+const ICONO_ASA = `<svg viewBox="0 0 24 24" width="14" height="20" aria-hidden="true">
+  <circle cx="9" cy="6" r="1.6" fill="currentColor"></circle>
+  <circle cx="15" cy="6" r="1.6" fill="currentColor"></circle>
+  <circle cx="9" cy="12" r="1.6" fill="currentColor"></circle>
+  <circle cx="15" cy="12" r="1.6" fill="currentColor"></circle>
+  <circle cx="9" cy="18" r="1.6" fill="currentColor"></circle>
+  <circle cx="15" cy="18" r="1.6" fill="currentColor"></circle>
+</svg>`;
+
 // Traducción automática (botón «Traducir con IA»). Usa MyMemory, un servicio gratuito y sin
 // clave: el texto se envía a su servidor para traducirlo, así que solo se usa al pulsar el botón.
 async function traducirTexto(texto: string, idioma: string): Promise<string> {
@@ -141,6 +169,7 @@ document.querySelectorAll<HTMLButtonElement>(".traducir-ia").forEach((boton) => 
 async function entrar(s: Secreto) {
   secreto = s;
   almacen = LOCAL ? almacenLocal() : almacenGitHub(s);
+  document.documentElement.dataset.sesion = "dentro"; // el candado de la cabecera se abre
   $("#login").hidden = true;
   $("#panel").hidden = false;
   $("#aviso-local").hidden = !LOCAL;
@@ -215,7 +244,10 @@ async function cargarCategorias() {
         datos.fotos ??= [];
         return { slug: a.ruta.split("/").pop()!.replace(/\.json$/, ""), datos };
       })
-      .sort((a, b) => (a.datos.orden ?? 99) - (b.datos.orden ?? 99));
+      // Las ocultas van siempre al final de la lista
+      .sort(
+        (a, b) => Number(!!a.datos.oculta) - Number(!!b.datos.oculta) || (a.datos.orden ?? 99) - (b.datos.orden ?? 99)
+      );
     pintarCategorias();
   } catch (e) {
     lista.innerHTML = "";
@@ -231,17 +263,23 @@ function pintarCategorias() {
   }
   lista.innerHTML = categorias
     .map((c, i) => {
-      const portada = c.datos.fotos[0]?.imagen || c.datos.portada;
+      const portada = c.datos.fotos.find((f) => !f.oculta)?.imagen || c.datos.fotos[0]?.imagen || c.datos.portada;
       const n = c.datos.fotos.length;
-      return `<li>
-        ${portada ? `<img src="${escapar(urlImagen(portada))}" alt="" loading="lazy" />` : `<span class="sin-foto"></span>`}
+      const oculta = !!c.datos.oculta;
+      const asa = oculta
+        ? `<span class="asa-espacio" aria-hidden="true"></span>`
+        : `<span class="asa-arrastrar" aria-hidden="true">${ICONO_ASA}</span>`;
+      return `<li class="${oculta ? "fila-oculta" : ""}" data-slug="${c.slug}">
+        ${asa}
+        ${portada ? `<img class="${oculta ? "en-gris" : ""}" src="${escapar(urlImagen(portada))}" alt="" loading="lazy" />` : `<span class="sin-foto"></span>`}
         <div class="info">
-          <span class="nombre">${escapar(c.datos.titulo)}</span>
+          <span class="nombre">${escapar(c.datos.titulo)}${oculta ? ` <span class="etiqueta-oculta">Oculta</span>` : ""}</span>
           <span class="contador">${n} ${n === 1 ? "foto" : "fotos"}</span>
         </div>
         <div class="botones">
           <button type="button" class="boton" data-editar="${i}">Modificar</button>
-          <button type="button" class="boton" data-eliminar="${i}">Eliminar</button>
+          <button type="button" class="boton" data-ocultar="${i}">${oculta ? "Mostrar" : "Ocultar"}</button>
+          <button type="button" class="boton peligro" data-eliminar="${i}">Eliminar</button>
         </div>
       </li>`;
     })
@@ -249,9 +287,59 @@ function pintarCategorias() {
   lista.querySelectorAll<HTMLButtonElement>("[data-editar]").forEach((b) =>
     b.addEventListener("click", () => abrirEdicion(categorias[Number(b.dataset.editar)]))
   );
+  lista.querySelectorAll<HTMLButtonElement>("[data-ocultar]").forEach((b) =>
+    b.addEventListener("click", () => alternarOcultar(categorias[Number(b.dataset.ocultar)]))
+  );
   lista.querySelectorAll<HTMLButtonElement>("[data-eliminar]").forEach((b) =>
     b.addEventListener("click", () => eliminarCategoria(categorias[Number(b.dataset.eliminar)]))
   );
+}
+
+// Arrastrar (los puntos, a la izquierda) para reordenar las categorías. Las ocultas no tienen
+// asa, así que no se pueden arrastrar, y no se puede soltar ninguna después de ellas: siempre
+// quedan al final.
+Sortable.create($("#lista-categorias"), {
+  animation: 150,
+  forceFallback: true,
+  handle: ".asa-arrastrar",
+  ghostClass: "arrastrando",
+  onMove: (evt) => !evt.related.classList.contains("fila-oculta"),
+  onEnd: async () => {
+    const filas = [...document.querySelectorAll<HTMLElement>("#lista-categorias li[data-slug]")];
+    const cambios: Cambio[] = [];
+    filas
+      .filter((li) => !li.classList.contains("fila-oculta"))
+      .forEach((li, i) => {
+        const cat = categorias.find((c) => c.slug === li.dataset.slug);
+        const nuevoOrden = i + 1;
+        if (cat && cat.datos.orden !== nuevoOrden) {
+          cat.datos.orden = nuevoOrden;
+          cambios.push({ ruta: `${DIR_CATEGORIAS}/${cat.slug}.json`, base64: jsonCategoria(cat.datos) });
+        }
+      });
+    if (!cambios.length) return;
+    const ok = await conEstado("Guardando el nuevo orden…", () => almacen.guardar(cambios, "Reordenar categorías"));
+    if (ok) {
+      estado(MSG_PUBLICADO, "ok");
+      await cargarCategorias();
+    }
+  },
+});
+
+// Ocultar/mostrar: la categoría deja de aparecer en la web pública, sin borrar nada
+async function alternarOcultar(c: Categoria) {
+  const oculta = !c.datos.oculta;
+  const datos: Categoria["datos"] = { ...c.datos, oculta };
+  const ok = await conEstado(oculta ? "Ocultando…" : "Mostrando…", () =>
+    almacen.guardar(
+      [{ ruta: `${DIR_CATEGORIAS}/${c.slug}.json`, base64: jsonCategoria(datos) }],
+      `${oculta ? "Ocultar" : "Mostrar"} categoría: ${c.datos.titulo}`
+    )
+  );
+  if (ok) {
+    estado(`${MSG_PUBLICADO} «${c.datos.titulo}» ${oculta ? "oculta" : "visible de nuevo"}.`, "ok");
+    await cargarCategorias();
+  }
 }
 
 // Añadir
@@ -347,15 +435,21 @@ function pintarFotos() {
   const n = editando.fotos.length;
   $("#editar-contador").textContent = `(${n})`;
   const ul = $("#editar-fotos");
+  // La portada real es la primera foto que no esté oculta
+  const primeraVisible = editando.fotos.findIndex((f) => !f.oculta);
   ul.innerHTML = n
     ? editando.fotos
         .map((f, i) => {
-          const etiquetas = [i === 0 ? "Portada" : "", f.nueva ? "Nueva" : ""].filter(Boolean);
-          return `<li>
+          const oculta = !!f.oculta;
+          const etiquetas = [i === primeraVisible ? "Portada" : "", f.nueva ? "Nueva" : ""].filter(Boolean);
+          return `<li class="${oculta ? "foto-oculta" : ""}">
             <button type="button" class="miniatura" data-nombrar="${i}" title="Pulsa para ponerle nombre">
               <img src="${escapar(f.nueva?.vista ?? urlImagen(f.imagen))}" alt="${escapar(f.titulo ?? "")}" loading="lazy" />
             </button>
             <span class="etiquetas">${etiquetas.map((e) => `<span>${e}</span>`).join("")}</span>
+            <button type="button" class="ojo" data-ojo="${i}" aria-label="${oculta ? "Mostrar foto" : "Ocultar foto"}" title="${oculta ? "Mostrar foto" : "Ocultar foto"}">
+              ${ICONO_OJO}
+            </button>
             <button type="button" class="quitar" data-quitar="${i}" aria-label="Quitar foto" title="Quitar foto">✕</button>
             <span class="nombre-foto ${f.titulo ? "" : "vacio"}">${escapar(f.titulo || "Sin nombre")}</span>
           </li>`;
@@ -363,8 +457,17 @@ function pintarFotos() {
         .join("")
     : `<li class="suave" style="cursor:auto">Aún no hay fotos. Añade algunas desde tu ordenador.</li>`;
   ul.querySelectorAll<HTMLButtonElement>("[data-quitar]").forEach((b) =>
-    b.addEventListener("click", () => {
+    b.addEventListener("click", async () => {
+      const seguro = await confirmar("¿Quitar esta foto?", "Se quitará de la categoría al guardar los cambios.");
+      if (!seguro) return;
       editando!.fotos.splice(Number(b.dataset.quitar), 1);
+      pintarFotos();
+    })
+  );
+  ul.querySelectorAll<HTMLButtonElement>("[data-ojo]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const i = Number(b.dataset.ojo);
+      editando!.fotos[i].oculta = !editando!.fotos[i].oculta;
       pintarFotos();
     })
   );
@@ -377,7 +480,7 @@ function pintarFotos() {
 Sortable.create($("#editar-fotos"), {
   animation: 150,
   forceFallback: true,
-  filter: ".quitar",
+  filter: ".quitar, .ojo",
   preventOnFilter: false,
   ghostClass: "arrastrando",
   chosenClass: "elegida",
@@ -447,7 +550,7 @@ $("#editar-cancelar").addEventListener("click", salirEdicion);
 function hayCambios() {
   if (!editando) return false;
   const limpiar = (fotos: FotoEdicion[]) =>
-    JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? "", f.tituloEn ?? ""]));
+    JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? "", f.tituloEn ?? "", !!f.oculta]));
   return (
     $<HTMLInputElement>("#editar-nombre").value.trim() !== editando.original.datos.titulo ||
     $<HTMLInputElement>("#editar-nombre-en").value.trim() !== (editando.original.datos.tituloEn ?? "") ||
@@ -485,8 +588,8 @@ $("#editar-guardar").addEventListener("click", async () => {
   const quitadas = original.datos.fotos
     .map((f) => f.imagen)
     .filter((i) => !imagenesFinales.has(i) && i.startsWith("/uploads/"));
-  // La primera foto es la portada de la categoría
-  const portada = fotos[0]?.imagen ?? "";
+  // La portada es la primera foto que no esté oculta
+  const portada = fotos.find((f) => !f.oculta)?.imagen ?? fotos[0]?.imagen ?? "";
 
   const datos: Categoria["datos"] = {
     ...original.datos,

@@ -1,10 +1,12 @@
 import { getCollection } from "astro:content";
 
+// Las categorías marcadas como «ocultas» desde el panel no se enseñan en la web pública
+// (ni en el inicio ni en su propia página, aunque alguien tenga el enlace guardado)
 export async function categoriasOrdenadas() {
   const cats = await getCollection("categorias");
-  return cats.sort(
-    (a, b) => (a.data.orden ?? 99) - (b.data.orden ?? 99) || a.data.titulo.localeCompare(b.data.titulo)
-  );
+  return cats
+    .filter((c) => !c.data.oculta)
+    .sort((a, b) => (a.data.orden ?? 99) - (b.data.orden ?? 99) || a.data.titulo.localeCompare(b.data.titulo));
 }
 
 export async function entradasOrdenadas() {
@@ -12,6 +14,7 @@ export async function entradasOrdenadas() {
   return posts.sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
 }
 
-// Portada de la categoría: la primera foto (si no tiene fotos, la portada guardada)
-export const portadaDe = (c: { data: { portada?: string | null; fotos: { imagen: string }[] } }) =>
-  c.data.fotos[0]?.imagen || c.data.portada;
+// Portada de la categoría: la primera foto que no esté oculta (si no hay, la portada guardada)
+export const portadaDe = (c: {
+  data: { portada?: string | null; fotos: { imagen: string; oculta?: boolean | null }[] };
+}) => c.data.fotos.find((f) => !f.oculta)?.imagen || c.data.portada;
