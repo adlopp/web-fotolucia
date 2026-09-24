@@ -31,11 +31,15 @@ type Entrada = {
   slug: string;
   datos: {
     titulo: string;
+    tituloEn?: string | null;
     fecha: string; // ISO
     portada?: string | null;
     resumen?: string | null;
+    resumenEn?: string | null;
     oculta?: boolean | null;
+    orden?: number | null;
     cuerpo: string; // el texto, en Markdown
+    cuerpoEn?: string | null;
   };
 };
 
@@ -127,20 +131,27 @@ const valorYaml = (v: unknown) => JSON.stringify(String(v ?? "")); // entre comi
 
 function serializarEntrada(d: Entrada["datos"]): string {
   const lineas = [`titulo: ${valorYaml(d.titulo)}`, `fecha: ${valorYaml(d.fecha)}`];
+  if (d.tituloEn) lineas.push(`tituloEn: ${valorYaml(d.tituloEn)}`);
   if (d.portada) lineas.push(`portada: ${valorYaml(d.portada)}`);
   if (d.resumen) lineas.push(`resumen: ${valorYaml(d.resumen)}`);
+  if (d.resumenEn) lineas.push(`resumenEn: ${valorYaml(d.resumenEn)}`);
   if (d.oculta) lineas.push(`oculta: true`);
+  if (d.orden != null) lineas.push(`orden: ${d.orden}`);
+  // El texto en inglés (si lo hay) también va en el frontmatter, en una sola línea con \n
+  // escapados, porque el texto principal (debajo de los ---) solo puede haber uno.
+  if (d.cuerpoEn) lineas.push(`cuerpoEn: ${valorYaml(d.cuerpoEn)}`);
   return `---\n${lineas.join("\n")}\n---\n\n${d.cuerpo.trim()}\n`;
 }
 
 function analizarEntrada(texto: string): Entrada["datos"] {
   const m = texto.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  const datos: Record<string, string | boolean> = {};
+  const datos: Record<string, string | number | boolean> = {};
   (m?.[1] ?? "").split(/\r?\n/).forEach((linea) => {
     const im = linea.match(/^([a-zA-Z]+):\s*(.*)$/);
     if (!im) return;
     const [, clave, bruto] = im;
     if (bruto === "true" || bruto === "false") datos[clave] = bruto === "true";
+    else if (/^-?\d+$/.test(bruto)) datos[clave] = Number(bruto);
     else if (/^".*"$/.test(bruto)) {
       try {
         datos[clave] = JSON.parse(bruto);
@@ -151,11 +162,15 @@ function analizarEntrada(texto: string): Entrada["datos"] {
   });
   return {
     titulo: String(datos.titulo ?? ""),
+    tituloEn: String(datos.tituloEn ?? ""),
     fecha: String(datos.fecha ?? new Date().toISOString()),
     portada: String(datos.portada ?? ""),
     resumen: String(datos.resumen ?? ""),
+    resumenEn: String(datos.resumenEn ?? ""),
+    orden: typeof datos.orden === "number" ? datos.orden : null,
     oculta: !!datos.oculta,
     cuerpo: (m?.[2] ?? "").trim(),
+    cuerpoEn: String(datos.cuerpoEn ?? ""),
   };
 }
 
@@ -694,11 +709,10 @@ $("#editar-guardar").addEventListener("click", async () => {
 // una sola foto principal en vez de una galería, y el orden es siempre por fecha (no se puede
 // arrastrar para reordenar).
 
+// Las ocultas van siempre al final de la lista (igual que las categorías)
 const ordenarEntradas = (es: Entrada[]) =>
   [...es].sort(
-    (a, b) =>
-      Number(!!a.datos.oculta) - Number(!!b.datos.oculta) ||
-      new Date(b.datos.fecha).getTime() - new Date(a.datos.fecha).getTime()
+    (a, b) => Number(!!a.datos.oculta) - Number(!!b.datos.oculta) || (a.datos.orden ?? 99e9) - (b.datos.orden ?? 99e9)
   );
 
 async function cargarEntradas() {
@@ -706,11 +720,17 @@ async function cargarEntradas() {
   lista.innerHTML = `<li class="suave">Cargando…</li>`;
   try {
     const archivos = await almacen.listar(DIR_BLOG);
-    entradas = ordenarEntradas(
-      archivos
-        .filter((a) => a.ruta.endsWith(".md"))
-        .map((a) => ({ slug: a.ruta.split("/").pop()!.replace(/\.md$/, ""), datos: analizarEntrada(a.contenido) }))
-    );
+    const brutas = archivos
+      .filter((a) => a.ruta.endsWith(".md"))
+      .map((a) => ({ slug: a.ruta.split("/").pop()!.replace(/\.md$/, ""), datos: analizarEntrada(a.contenido) }));
+    // Entradas de antes de tener esta opción: se les da un orden según su fecha (la más
+    // reciente, primero), para que empiecen ordenadas tal y como ya se veían en la web
+    const sinOrden = brutas.filter((e) => e.datos.orden == null);
+    const base = Math.max(0, ...brutas.map((o) => o.datos.orden ?? 0));
+    sinOrden
+      .sort((a, b) => new Date(b.datos.fecha).getTime() - new Date(a.datos.fecha).getTime())
+      .forEach((e, i) => (e.datos.orden = base + 1 + i));
+    entradas = ordenarEntradas(brutas);
     pintarEntradas();
   } catch (e) {
     lista.innerHTML = "";
@@ -732,7 +752,11 @@ function pintarEntradas() {
         month: "long",
         year: "numeric",
       });
+      const asa = oculta
+        ? `<span class="asa-espacio" aria-hidden="true"></span>`
+        : `<span class="asa-arrastrar" aria-hidden="true">${ICONO_ASA}</span>`;
       return `<li class="${oculta ? "fila-oculta" : ""}" data-slug="${e.slug}">
+        ${asa}
         ${e.datos.portada ? `<img src="${escapar(urlImagen(e.datos.portada))}" alt="" loading="lazy" />` : `<span class="sin-foto"></span>`}
         <div class="info">
           <span class="nombre">${escapar(e.datos.titulo)}${oculta ? ` <span class="etiqueta-oculta">Oculta</span>` : ""}</span>
@@ -756,6 +780,36 @@ function pintarEntradas() {
     b.addEventListener("click", () => eliminarEntrada(entradas[Number(b.dataset.eliminarEntrada)]))
   );
 }
+
+// Arrastrar (los puntos, a la izquierda) para reordenar las entradas, igual que las categorías
+Sortable.create($("#lista-blog"), {
+  animation: 150,
+  forceFallback: true,
+  handle: ".asa-arrastrar",
+  ghostClass: "arrastrando",
+  onMove: (evt) => !evt.related.classList.contains("fila-oculta"),
+  onEnd: async () => {
+    const filas = [...document.querySelectorAll<HTMLElement>("#lista-blog li[data-slug]")];
+    const cambios: Cambio[] = [];
+    filas
+      .filter((li) => !li.classList.contains("fila-oculta"))
+      .forEach((li, i) => {
+        const e = entradas.find((o) => o.slug === li.dataset.slug);
+        const nuevoOrden = i + 1;
+        if (e && e.datos.orden !== nuevoOrden) {
+          e.datos.orden = nuevoOrden;
+          cambios.push({ ruta: `${DIR_BLOG}/${e.slug}.md`, base64: textoABase64(serializarEntrada(e.datos)) });
+        }
+      });
+    if (!cambios.length) return;
+    const ok = await conEstado("Guardando el nuevo orden…", () => almacen.guardar(cambios, "Reordenar entradas"));
+    if (ok) {
+      estado(MSG_PUBLICADO, "ok");
+      entradas = ordenarEntradas(entradas);
+      pintarEntradas();
+    }
+  },
+});
 
 // Ocultar/mostrar
 async function alternarOcultarEntrada(e: Entrada) {
@@ -796,9 +850,10 @@ dialogoEntrada.querySelector("form")!.addEventListener("submit", async (e) => {
     return;
   }
   dialogoEntrada.close();
+  const orden = Math.max(0, ...entradas.map((e) => e.datos.orden ?? 0)) + 1;
   const nueva: Entrada = {
     slug,
-    datos: { titulo, fecha: new Date().toISOString(), portada: "", resumen: "", cuerpo: "" },
+    datos: { titulo, fecha: new Date().toISOString(), portada: "", resumen: "", orden, cuerpo: "" },
   };
   const ok = await conEstado("Creando entrada…", () =>
     almacen.guardar(
@@ -835,12 +890,37 @@ async function eliminarEntrada(e: Entrada) {
 }
 
 // El editor de texto (una sola vez; cada entrada solo cambia lo que contiene)
+const TOOLBAR_ENTRADA = [
+  "bold",
+  "italic",
+  "heading-2",
+  "heading-3",
+  "|",
+  "quote",
+  "unordered-list",
+  "ordered-list",
+  "|",
+  "link",
+  "image",
+  "|",
+  "preview",
+  "guide",
+] as const;
+
 const entradaMde = new EasyMDE({
   element: $<HTMLTextAreaElement>("#entrada-cuerpo"),
   spellChecker: false,
   status: ["lines", "words"],
   placeholder: "Escribe aquí la entrada…",
-  toolbar: ["bold", "italic", "heading-2", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "guide"],
+  toolbar: [...TOOLBAR_ENTRADA],
+});
+
+const entradaMdeEn = new EasyMDE({
+  element: $<HTMLTextAreaElement>("#entrada-cuerpo-en"),
+  spellChecker: false,
+  status: ["lines", "words"],
+  placeholder: "Déjalo en blanco para que, en inglés, se siga viendo el texto en español…",
+  toolbar: [...TOOLBAR_ENTRADA],
 });
 
 function pintarPortadaEntrada() {
@@ -880,12 +960,17 @@ function abrirEdicionEntrada(e: Entrada) {
   editandoEntrada = { original: e, portada: e.datos.portada ?? "" };
   $("#entrada-titulo-visor").textContent = e.datos.titulo;
   $<HTMLInputElement>("#entrada-titulo").value = e.datos.titulo;
+  $<HTMLInputElement>("#entrada-titulo-en").value = e.datos.tituloEn ?? "";
   $<HTMLInputElement>("#entrada-fecha").value = e.datos.fecha.slice(0, 10);
   $<HTMLInputElement>("#entrada-resumen").value = e.datos.resumen ?? "";
+  $<HTMLInputElement>("#entrada-resumen-en").value = e.datos.resumenEn ?? "";
   pintarPortadaEntrada();
   entradaMde.value(e.datos.cuerpo);
+  entradaMdeEn.value(e.datos.cuerpoEn ?? "");
   mostrarVista("editar-entrada");
-  entradaMde.codemirror.refresh(); // el editor se dibuja mal si estaba oculto al crearse
+  // El editor se dibuja mal si estaba oculto al crearse
+  entradaMde.codemirror.refresh();
+  entradaMdeEn.codemirror.refresh();
 }
 
 $("#volver-blog").addEventListener("click", salirEdicionEntrada);
@@ -895,10 +980,13 @@ function hayCambiosEntrada() {
   if (!editandoEntrada) return false;
   return (
     $<HTMLInputElement>("#entrada-titulo").value.trim() !== editandoEntrada.original.datos.titulo ||
+    $<HTMLInputElement>("#entrada-titulo-en").value.trim() !== (editandoEntrada.original.datos.tituloEn ?? "") ||
     $<HTMLInputElement>("#entrada-fecha").value !== editandoEntrada.original.datos.fecha.slice(0, 10) ||
     $<HTMLInputElement>("#entrada-resumen").value.trim() !== (editandoEntrada.original.datos.resumen ?? "") ||
+    $<HTMLInputElement>("#entrada-resumen-en").value.trim() !== (editandoEntrada.original.datos.resumenEn ?? "") ||
     editandoEntrada.portada !== (editandoEntrada.original.datos.portada ?? "") ||
-    entradaMde.value().trim() !== editandoEntrada.original.datos.cuerpo.trim()
+    entradaMde.value().trim() !== editandoEntrada.original.datos.cuerpo.trim() ||
+    entradaMdeEn.value().trim() !== (editandoEntrada.original.datos.cuerpoEn ?? "").trim()
   );
 }
 
@@ -913,9 +1001,12 @@ $("#entrada-guardar").addEventListener("click", async () => {
   if (!editandoEntrada) return;
   const { original } = editandoEntrada;
   const titulo = $<HTMLInputElement>("#entrada-titulo").value.trim();
+  const tituloEn = $<HTMLInputElement>("#entrada-titulo-en").value.trim();
   const fechaInput = $<HTMLInputElement>("#entrada-fecha").value;
   const resumen = $<HTMLInputElement>("#entrada-resumen").value.trim();
+  const resumenEn = $<HTMLInputElement>("#entrada-resumen-en").value.trim();
   const cuerpo = entradaMde.value().trim();
+  const cuerpoEn = entradaMdeEn.value().trim();
   const slug = slugify(titulo);
   if (!slug) {
     estado("✗ El título no puede estar vacío.", "mal");
@@ -933,10 +1024,13 @@ $("#entrada-guardar").addEventListener("click", async () => {
   const datos: Entrada["datos"] = {
     ...original.datos,
     titulo,
+    tituloEn: tituloEn || "",
     fecha: `${fechaInput}T10:00:00.000Z`,
     resumen: resumen || "",
+    resumenEn: resumenEn || "",
     portada: editandoEntrada.portada || "",
     cuerpo,
+    cuerpoEn: cuerpoEn || "",
   };
   const cambios: Cambio[] = [];
   if (editandoEntrada.portadaNueva) {

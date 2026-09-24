@@ -6,7 +6,7 @@ interface Props {
   entrada: CollectionEntry<"blog">;
 }
 const { entrada } = Astro.props;
-const { titulo, fecha, portada, resumen } = entrada.data;
+const { titulo, tituloEn, fecha, portada, resumen, resumenEn } = entrada.data;
 ---
 
 <a href={url(`/blog/${entrada.id}`)} class="tarjeta">
@@ -14,8 +14,8 @@ const { titulo, fecha, portada, resumen } = entrada.data;
     {portada && <img src={url(portada)} alt="" loading="lazy" />}
   </div>
   <time class="etiqueta" datetime={fecha.toISOString()} data-en={formatoFechaEn(fecha)}>{formatoFecha(fecha)}</time>
-  <h3>{titulo}</h3>
-  {resumen && <p>{resumen}</p>}
+  <h3 data-en={tituloEn || titulo}>{titulo}</h3>
+  {resumen && <p data-en={resumenEn || resumen}>{resumen}</p>}
 </a>
 
 <style>

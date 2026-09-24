@@ -131,19 +131,56 @@ import "easymde/dist/easymde.min.css";
       <button type="button" class="volver" id="volver-blog">← Blog</button>
       <h2 id="entrada-titulo-visor"></h2>
 
+      <div class="campos-nombre">
+        <label class="campo">
+          Título (español)
+          <input id="entrada-titulo" />
+        </label>
+        <label class="campo">
+          <span class="campo-cabecera">
+            Título (inglés)
+            <button
+              type="button"
+              class="traducir-ia"
+              data-desde="entrada-titulo"
+              data-hacia="entrada-titulo-en"
+              data-idioma="en"
+              aria-label="Traducir con IA"
+              title="Traducir con IA"
+            >
+              <IconoTraducirIA />
+            </button>
+          </span>
+          <input id="entrada-titulo-en" placeholder="Igual que en español" />
+        </label>
+      </div>
+
       <label class="campo">
-        Título
-        <input id="entrada-titulo" />
+        Fecha
+        <input id="entrada-fecha" type="date" />
       </label>
 
       <div class="campos-nombre">
         <label class="campo">
-          Fecha
-          <input id="entrada-fecha" type="date" />
+          Resumen (español)
+          <input id="entrada-resumen" placeholder="Una o dos frases, sale en el listado del blog" />
         </label>
         <label class="campo">
-          Resumen (sale en el listado del blog)
-          <input id="entrada-resumen" placeholder="Una o dos frases" />
+          <span class="campo-cabecera">
+            Resumen (inglés)
+            <button
+              type="button"
+              class="traducir-ia"
+              data-desde="entrada-resumen"
+              data-hacia="entrada-resumen-en"
+              data-idioma="en"
+              aria-label="Traducir con IA"
+              title="Traducir con IA"
+            >
+              <IconoTraducirIA />
+            </button>
+          </span>
+          <input id="entrada-resumen-en" placeholder="Igual que en español" />
         </label>
       </div>
 
@@ -164,9 +201,15 @@ import "easymde/dist/easymde.min.css";
       </div>
 
       <div class="vista-cabecera">
-        <h3>Texto</h3>
+        <h3>Texto (español)</h3>
       </div>
       <textarea id="entrada-cuerpo"></textarea>
+
+      <div class="vista-cabecera">
+        <h3>Texto (inglés)</h3>
+      </div>
+      <p class="ayuda">Déjalo en blanco para que, en inglés, se siga viendo el texto en español.</p>
+      <textarea id="entrada-cuerpo-en"></textarea>
 
       <div class="acciones">
         <button type="button" class="boton" id="entrada-cancelar">Cancelar</button>
@@ -801,7 +844,8 @@ import "easymde/dist/easymde.min.css";
   }
 
   /* Editor de texto (EasyMDE), a juego con el resto del panel */
-  #entrada-cuerpo {
+  #entrada-cuerpo,
+  #entrada-cuerpo-en {
     display: none; /* EasyMDE lo sustituye por su propio editor */
   }
 

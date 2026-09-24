@@ -31,10 +31,14 @@ const blog = defineCollection({
   loader: glob({ pattern: "*.md", base: "./content/blog" }),
   schema: z.object({
     titulo: z.string(),
+    tituloEn: z.string().nullish(),
     fecha: z.coerce.date(),
     portada: z.string().nullish(),
     resumen: z.string().nullish(),
+    resumenEn: z.string().nullish(),
     oculta: z.boolean().nullish(),
+    orden: z.number().nullish(),
+    cuerpoEn: z.string().nullish(),
   }),
 });
 

@@ -1,5 +1,6 @@
 ---
 import { render } from "astro:content";
+import { marked } from "marked";
 import Base from "../../layouts/Base.astro";
 import { entradasOrdenadas } from "../../lib";
 import { formatoFecha, formatoFechaEn, url } from "../../site";
@@ -10,22 +11,28 @@ export async function getStaticPaths() {
 }
 
 const { entrada } = Astro.props;
-const { titulo, fecha, portada, resumen } = entrada.data;
+const { titulo, tituloEn, fecha, portada, resumen, cuerpoEn } = entrada.data;
 const { Content } = await render(entrada);
+// El texto en inglés (si lo hay) se escribe aparte en el panel, así que se convierte de
+// Markdown a HTML aquí; si no se ha escrito, en inglés se sigue viendo el texto en español.
+const htmlEn = cuerpoEn ? await marked.parse(cuerpoEn) : "";
 ---
 
 <Base titulo={titulo} descripcion={resumen ?? undefined}>
   <article>
     <header>
-      <a href={url("/blog")} class="etiqueta volver">← Blog</a>
-      <h1>{titulo}</h1>
+      <a href={url("/blog")} class="etiqueta volver" data-en="← Blog">← Blog</a>
+      <h1 data-en={tituloEn || titulo}>{titulo}</h1>
       <time class="etiqueta" datetime={fecha.toISOString()} data-en={formatoFechaEn(fecha)}>{formatoFecha(fecha)}</time>
     </header>
 
     {portada && <img class="portada" src={url(portada)} alt="" />}
 
-    <div class="texto">
-      <Content />
+    <div class={`texto ${htmlEn ? "con-ingles" : ""}`}>
+      <div class="texto-es">
+        <Content />
+      </div>
+      {htmlEn && <div class="texto-en" set:html={htmlEn} />}
     </div>
   </article>
 </Base>
@@ -61,6 +68,19 @@ const { Content } = await render(entrada);
     margin: 0 auto;
     font-size: 1.08rem;
     line-height: 1.85;
+  }
+
+  /* Si hay texto en inglés escrito, se cambia al pulsar la bandera; si no, se queda en español */
+  .texto .texto-en {
+    display: none;
+  }
+
+  :global([data-idioma="en"]) .texto.con-ingles .texto-es {
+    display: none;
+  }
+
+  :global([data-idioma="en"]) .texto.con-ingles .texto-en {
+    display: block;
   }
 
   .texto :global(h2) {
