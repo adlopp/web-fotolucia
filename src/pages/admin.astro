@@ -443,7 +443,9 @@ import IconoTraducirIA from "../components/IconoTraducirIA.astro";
     border-bottom: 1px solid var(--linea);
   }
 
-  .lista li.fila-oculta {
+  /* Solo la foto se atenúa; el nombre y los botones se quedan nítidos */
+  .lista li.fila-oculta img,
+  .lista li.fila-oculta .sin-foto {
     opacity: 0.55;
   }
 

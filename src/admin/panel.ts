@@ -232,22 +232,26 @@ document.querySelectorAll<HTMLButtonElement>(".pestanas [data-vista]").forEach((
 
 // ---------- categorías ----------
 
+// Las ocultas van siempre al final de la lista
+const ordenarCategorias = (cats: Categoria[]) =>
+  [...cats].sort(
+    (a, b) => Number(!!a.datos.oculta) - Number(!!b.datos.oculta) || (a.datos.orden ?? 99) - (b.datos.orden ?? 99)
+  );
+
 async function cargarCategorias() {
   const lista = $("#lista-categorias");
   lista.innerHTML = `<li class="suave">Cargando…</li>`;
   try {
     const archivos = await almacen.listar(DIR_CATEGORIAS);
-    categorias = archivos
-      .filter((a) => a.ruta.endsWith(".json"))
-      .map((a) => {
-        const datos = JSON.parse(a.contenido);
-        datos.fotos ??= [];
-        return { slug: a.ruta.split("/").pop()!.replace(/\.json$/, ""), datos };
-      })
-      // Las ocultas van siempre al final de la lista
-      .sort(
-        (a, b) => Number(!!a.datos.oculta) - Number(!!b.datos.oculta) || (a.datos.orden ?? 99) - (b.datos.orden ?? 99)
-      );
+    categorias = ordenarCategorias(
+      archivos
+        .filter((a) => a.ruta.endsWith(".json"))
+        .map((a) => {
+          const datos = JSON.parse(a.contenido);
+          datos.fotos ??= [];
+          return { slug: a.ruta.split("/").pop()!.replace(/\.json$/, ""), datos };
+        })
+    );
     pintarCategorias();
   } catch (e) {
     lista.innerHTML = "";
@@ -321,7 +325,9 @@ Sortable.create($("#lista-categorias"), {
     const ok = await conEstado("Guardando el nuevo orden…", () => almacen.guardar(cambios, "Reordenar categorías"));
     if (ok) {
       estado(MSG_PUBLICADO, "ok");
-      await cargarCategorias();
+      // No se vuelve a pedir a GitHub: ya sabemos el orden que se acaba de guardar
+      categorias = ordenarCategorias(categorias);
+      pintarCategorias();
     }
   },
 });
@@ -338,7 +344,12 @@ async function alternarOcultar(c: Categoria) {
   );
   if (ok) {
     estado(`${MSG_PUBLICADO} «${c.datos.titulo}» ${oculta ? "oculta" : "visible de nuevo"}.`, "ok");
-    await cargarCategorias();
+    // No se vuelve a pedir a GitHub: justo después de guardar, a veces devuelve la versión
+    // anterior durante uno o dos segundos. Como ya sabemos lo que se ha guardado, actualizamos
+    // la lista con eso directamente.
+    c.datos = datos;
+    categorias = ordenarCategorias(categorias);
+    pintarCategorias();
   }
 }
 
@@ -373,8 +384,9 @@ dialogoNombre.querySelector("form")!.addEventListener("submit", async (e) => {
   );
   if (ok) {
     estado(`${MSG_PUBLICADO} Ahora puedes añadirle fotos.`, "ok");
-    await cargarCategorias();
-    abrirEdicion(categorias.find((c) => c.slug === slug) ?? nueva);
+    categorias = ordenarCategorias([...categorias, nueva]);
+    pintarCategorias();
+    abrirEdicion(nueva);
   }
 });
 
@@ -414,7 +426,8 @@ async function eliminarCategoria(c: Categoria) {
   const ok = await conEstado("Eliminando…", () => almacen.guardar(cambios, `Eliminar categoría: ${c.datos.titulo}`));
   if (ok) {
     estado(`${MSG_PUBLICADO} «${c.datos.titulo}» eliminada.`, "ok");
-    await cargarCategorias();
+    categorias = categorias.filter((o) => o.slug !== c.slug);
+    pintarCategorias();
   }
 }
 
@@ -609,8 +622,9 @@ $("#editar-guardar").addEventListener("click", async () => {
 
   const ok = await conEstado("Guardando…", () => almacen.guardar(cambios, `Modificar categoría: ${titulo}`));
   if (ok) {
+    categorias = ordenarCategorias(categorias.map((c) => (c.slug === original.slug ? { slug, datos } : c)));
     editando = null;
-    await cargarCategorias();
+    pintarCategorias();
     mostrarVista("categorias");
     estado(MSG_PUBLICADO, "ok");
   }
