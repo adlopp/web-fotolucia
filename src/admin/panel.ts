@@ -94,6 +94,48 @@ async function prepararImagen(archivo: File) {
 
 const jsonCategoria = (c: Categoria["datos"]) => textoABase64(JSON.stringify(c, null, 2) + "\n");
 
+// Traducción automática (botón «Traducir con IA»). Usa MyMemory, un servicio gratuito y sin
+// clave: el texto se envía a su servidor para traducirlo, así que solo se usa al pulsar el botón.
+async function traducirTexto(texto: string, idioma: string): Promise<string> {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=es|${idioma}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("El traductor no responde.");
+  const datos = await res.json();
+  const traducido: string | undefined = datos?.responseData?.translatedText;
+  if (!traducido || /MYMEMORY WARNING|INVALID/.test(traducido)) {
+    throw new Error("No se ha podido traducir (puede que se haya agotado el límite gratuito de hoy).");
+  }
+  return traducido;
+}
+
+// Conecta cada botón «Traducir con IA» con su campo de origen (español) y destino
+document.querySelectorAll<HTMLButtonElement>(".traducir-ia").forEach((boton) => {
+  const origen = document.getElementById(boton.dataset.desde!) as HTMLInputElement | HTMLTextAreaElement;
+  const destino = document.getElementById(boton.dataset.hacia!) as HTMLInputElement | HTMLTextAreaElement;
+  const idioma = boton.dataset.idioma!;
+  const tituloOriginal = boton.title;
+  boton.addEventListener("click", async () => {
+    const texto = origen.value.trim();
+    if (!texto) return;
+    boton.disabled = true;
+    boton.classList.remove("error");
+    boton.classList.add("cargando");
+    try {
+      destino.value = await traducirTexto(texto, idioma);
+    } catch (e) {
+      boton.classList.add("error");
+      boton.title = (e as Error).message;
+      setTimeout(() => {
+        boton.classList.remove("error");
+        boton.title = tituloOriginal;
+      }, 4000);
+    } finally {
+      boton.classList.remove("cargando");
+      boton.disabled = false;
+    }
+  });
+});
+
 // ---------- acceso ----------
 
 async function entrar(s: Secreto) {
@@ -109,19 +151,22 @@ async function entrar(s: Secreto) {
   await cargarCategorias();
 }
 
+// La pantalla de acceso también respeta el idioma elegido con la bandera (antes de entrar)
+const enIngles = () => document.documentElement.dataset.idioma === "en";
+
 $("#form-login").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.currentTarget as HTMLFormElement;
   const datos = new FormData(form);
   const boton = form.querySelector("button")!;
   boton.disabled = true;
-  boton.textContent = "Comprobando…";
+  boton.textContent = enIngles() ? "Checking…" : "Comprobando…";
   $("#error-login").textContent = "";
   const s = await descifrar(credenciales as Credenciales, String(datos.get("usuario")), String(datos.get("clave")));
   boton.disabled = false;
-  boton.textContent = "Entrar";
+  boton.textContent = enIngles() ? "Log in" : "Entrar";
   if (!s) {
-    $("#error-login").textContent = "Usuario o contraseña incorrectos.";
+    $("#error-login").textContent = enIngles() ? "Incorrect username or password." : "Usuario o contraseña incorrectos.";
     return;
   }
   try {
