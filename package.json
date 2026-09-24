@@ -11,7 +11,8 @@
     "configurar-admin": "node scripts/configurar-admin.ts"
   },
   "dependencies": {
-    "astro": "^7.3.4"
+    "astro": "^7.3.4",
+    "sortablejs": "^1.15.7"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,
@@ -86,6 +87,7 @@
     ]
   },
   "devDependencies": {
+    "@types/sortablejs": "^1.15.9",
     "sharp": "^0.35.4"
   }
 }

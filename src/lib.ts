@@ -12,6 +12,6 @@ export async function entradasOrdenadas() {
   return posts.sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime());
 }
 
-// Portada de la categoría: la elegida, o si no la primera foto
+// Portada de la categoría: la primera foto (si no tiene fotos, la portada guardada)
 export const portadaDe = (c: { data: { portada?: string | null; fotos: { imagen: string }[] } }) =>
-  c.data.portada || c.data.fotos[0]?.imagen;
+  c.data.fotos[0]?.imagen || c.data.portada;

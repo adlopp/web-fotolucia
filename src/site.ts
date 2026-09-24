@@ -3,9 +3,11 @@ export const SITE = {
   nombre: "Foto",
   subtitulo: "Lucía",
   descripcion: "Fotografía de animales, retratos, paisajes y calle. Y un pequeño blog.",
+  instagram: "lairinx",
+  correo: "lopezluciam7@gmail.com",
 };
 
-// Añade la subcarpeta de GitHub Pages (/web-fotolucia) a enlaces e imágenes: url("/blog")
+// Añade la subcarpeta de GitHub Pages a enlaces e imágenes, si la hay: url("/blog")
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 export const url = (ruta: string) => `${BASE}${ruta}`;
 

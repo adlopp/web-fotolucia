@@ -1,6 +1,7 @@
 import credenciales from "./credenciales.json";
 import { descifrar, type Credenciales, type Secreto } from "./cripto";
 import { almacenGitHub, almacenLocal, textoABase64, type Almacen, type Cambio } from "./almacen";
+import Sortable from "sortablejs";
 
 type Foto = { imagen: string; titulo?: string | null; pie?: string | null };
 type Categoria = {
@@ -177,7 +178,7 @@ function pintarCategorias() {
   }
   lista.innerHTML = categorias
     .map((c, i) => {
-      const portada = c.datos.portada || c.datos.fotos[0]?.imagen;
+      const portada = c.datos.fotos[0]?.imagen || c.datos.portada;
       const n = c.datos.fotos.length;
       return `<li>
         ${portada ? `<img src="${escapar(urlImagen(portada))}" alt="" loading="lazy" />` : `<span class="sin-foto"></span>`}
@@ -292,21 +293,69 @@ function pintarFotos() {
   const ul = $("#editar-fotos");
   ul.innerHTML = n
     ? editando.fotos
-        .map(
-          (f, i) => `<li class="${f.nueva ? "nueva" : ""}">
-            <img src="${escapar(f.nueva?.vista ?? urlImagen(f.imagen))}" alt="${escapar(f.titulo ?? "")}" loading="lazy" />
+        .map((f, i) => {
+          const etiquetas = [i === 0 ? "Portada" : "", f.nueva ? "Nueva" : ""].filter(Boolean);
+          return `<li>
+            <button type="button" class="miniatura" data-nombrar="${i}" title="Pulsa para ponerle nombre">
+              <img src="${escapar(f.nueva?.vista ?? urlImagen(f.imagen))}" alt="${escapar(f.titulo ?? "")}" loading="lazy" />
+            </button>
+            <span class="etiquetas">${etiquetas.map((e) => `<span>${e}</span>`).join("")}</span>
             <button type="button" class="quitar" data-quitar="${i}" aria-label="Quitar foto" title="Quitar foto">✕</button>
-          </li>`
-        )
+            <span class="nombre-foto ${f.titulo ? "" : "vacio"}">${escapar(f.titulo || "Sin nombre")}</span>
+          </li>`;
+        })
         .join("")
-    : `<li class="suave" style="aspect-ratio:auto;background:none">Aún no hay fotos. Añade algunas desde tu ordenador.</li>`;
+    : `<li class="suave" style="cursor:auto">Aún no hay fotos. Añade algunas desde tu ordenador.</li>`;
   ul.querySelectorAll<HTMLButtonElement>("[data-quitar]").forEach((b) =>
     b.addEventListener("click", () => {
       editando!.fotos.splice(Number(b.dataset.quitar), 1);
       pintarFotos();
     })
   );
+  ul.querySelectorAll<HTMLButtonElement>("[data-nombrar]").forEach((b) =>
+    b.addEventListener("click", () => nombrarFoto(Number(b.dataset.nombrar)))
+  );
 }
+
+// Arrastrar para cambiar el orden (funciona con ratón y con el dedo)
+Sortable.create($("#editar-fotos"), {
+  animation: 150,
+  forceFallback: true,
+  filter: ".quitar",
+  preventOnFilter: false,
+  ghostClass: "arrastrando",
+  chosenClass: "elegida",
+  delay: 150,
+  delayOnTouchOnly: true,
+  onEnd: ({ oldIndex, newIndex }) => {
+    if (!editando || oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+    const [foto] = editando.fotos.splice(oldIndex, 1);
+    editando.fotos.splice(newIndex, 0, foto);
+    pintarFotos();
+  },
+});
+
+// Pulsar una foto: ponerle nombre (si se deja vacío, se queda sin nombre)
+const dialogoFoto = $<HTMLDialogElement>("#dialogo-foto");
+let fotoNombrando = -1;
+function nombrarFoto(i: number) {
+  if (!editando) return;
+  const f = editando.fotos[i];
+  fotoNombrando = i;
+  $<HTMLImageElement>("#foto-vista").src = f.nueva?.vista ?? urlImagen(f.imagen);
+  const input = dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!;
+  input.value = f.titulo ?? "";
+  dialogoFoto.showModal();
+  input.focus();
+}
+dialogoFoto.querySelector("form")!.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (editando && editando.fotos[fotoNombrando]) {
+    editando.fotos[fotoNombrando].titulo = dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!.value.trim();
+    pintarFotos();
+  }
+  dialogoFoto.close();
+});
 
 $<HTMLInputElement>("#editar-subir").addEventListener("change", async (e) => {
   const input = e.currentTarget as HTMLInputElement;
@@ -319,7 +368,7 @@ $<HTMLInputElement>("#editar-subir").addEventListener("change", async (e) => {
   for (const archivo of archivos) {
     try {
       const nueva = await prepararImagen(archivo);
-      const nombre = `${slugify(archivo.name.replace(/\.[^.]+$/, "")) || "foto"}-${Date.now().toString(36)}.jpg`;
+      const nombre = `${slugify(archivo.name.replace(/\.[^.]+$/, "")) || "foto"}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}.jpg`;
       editando.fotos.push({ imagen: `/uploads/${carpeta}/${nombre}`, titulo: "", pie: "", nueva });
     } catch {
       fallidas++;
@@ -337,8 +386,18 @@ $<HTMLInputElement>("#editar-subir").addEventListener("change", async (e) => {
 $("#volver-categorias").addEventListener("click", salirEdicion);
 $("#editar-cancelar").addEventListener("click", salirEdicion);
 
+// ¿Ha cambiado algo (nombre, fotos, orden o nombres de fotos) desde que se abrió?
+function hayCambios() {
+  if (!editando) return false;
+  const limpiar = (fotos: FotoEdicion[]) => JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? ""]));
+  return (
+    $<HTMLInputElement>("#editar-nombre").value.trim() !== editando.original.datos.titulo ||
+    limpiar(editando.fotos) !== limpiar(editando.original.datos.fotos)
+  );
+}
+
 function salirEdicion() {
-  if (editando?.fotos.some((f) => f.nueva) && !window.confirm("Hay fotos sin guardar. ¿Salir igualmente?")) return;
+  if (hayCambios() && !window.confirm("Hay cambios sin guardar. ¿Salir igualmente?")) return;
   editando = null;
   estado("");
   mostrarVista("categorias");
@@ -362,7 +421,8 @@ $("#editar-guardar").addEventListener("click", async () => {
   const quitadas = original.datos.fotos
     .map((f) => f.imagen)
     .filter((i) => !imagenesFinales.has(i) && i.startsWith("/uploads/"));
-  const portada = original.datos.portada && imagenesFinales.has(original.datos.portada) ? original.datos.portada : "";
+  // La primera foto es la portada de la categoría
+  const portada = fotos[0]?.imagen ?? "";
 
   const datos: Categoria["datos"] = {
     ...original.datos,

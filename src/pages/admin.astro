@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import IconosTema from "../components/IconosTema.astro";
 ---
 
 <Base titulo="Administración" noindex>
@@ -28,6 +29,7 @@ import Base from "../layouts/Base.astro";
       <nav class="pestanas">
         <button type="button" data-vista="categorias" class="activa">Categorías</button>
         <button type="button" data-vista="blog">Blog</button>
+        <button type="button" class="tema tema-panel" data-cambiar-tema><IconosTema /></button>
         <button type="button" id="cerrar-panel" class="cerrar">Cerrar panel</button>
       </nav>
     </div>
@@ -63,6 +65,7 @@ import Base from "../layouts/Base.astro";
           <input type="file" id="editar-subir" accept="image/*" multiple hidden />
         </label>
       </div>
+      <p class="ayuda">Arrastra las fotos para cambiar el orden: la primera es la portada. Pulsa una foto para ponerle nombre.</p>
       <ul class="fotos" id="editar-fotos"></ul>
 
       <div class="acciones">
@@ -97,6 +100,22 @@ import Base from "../layouts/Base.astro";
       <div class="acciones">
         <button type="button" class="boton" value="cancelar" data-cerrar>Cancelar</button>
         <button type="submit" class="boton principal" value="ok">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: nombre de una foto -->
+  <dialog id="dialogo-foto" class="dialogo">
+    <form method="dialog">
+      <h3>Nombre de la foto</h3>
+      <img id="foto-vista" alt="" />
+      <label class="campo">
+        Nombre (opcional)
+        <input name="titulo" placeholder="Sin nombre" />
+      </label>
+      <div class="acciones">
+        <button type="button" class="boton" data-cerrar>Cancelar</button>
+        <button type="submit" class="boton principal" value="ok">Aceptar</button>
       </div>
     </form>
   </dialog>
@@ -392,29 +411,89 @@ import Base from "../layouts/Base.astro";
     gap: 12px;
   }
 
+  .ayuda {
+    margin: -12px 0 16px;
+    font-size: 0.85rem;
+    color: var(--suave);
+  }
+
   .fotos li {
     position: relative;
+    cursor: grab;
+    touch-action: manipulation;
+  }
+
+  .fotos .miniatura {
+    display: block;
+    width: 100%;
     aspect-ratio: 1;
+    padding: 0;
+    border: 0;
     background: var(--linea);
+    cursor: inherit;
   }
 
   .fotos img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none;
   }
 
-  .fotos .nueva::after {
-    content: "Nueva";
+  .fotos .nombre-foto {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fotos .nombre-foto.vacio {
+    color: var(--suave);
+    font-style: italic;
+  }
+
+  /* Etiquetas sobre la foto: «Portada» (la primera) y «Nueva» (sin guardar) */
+  .fotos .etiquetas {
     position: absolute;
     left: 6px;
     top: 6px;
+    display: flex;
+    gap: 4px;
+    pointer-events: none;
+  }
+
+  .fotos .etiquetas span {
     background: var(--texto);
     color: var(--fondo);
     font-size: 0.65rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 2px 6px;
+  }
+
+  /* Mientras se arrastra */
+  .fotos .arrastrando {
+    opacity: 0.35;
+  }
+
+  .fotos .elegida .miniatura {
+    outline: 2px solid var(--texto);
+    outline-offset: 2px;
+  }
+
+  #foto-vista {
+    width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    background: var(--linea);
+    margin-top: 16px;
+  }
+
+  .pestanas .tema-panel {
+    display: inline-flex;
+    align-items: center;
   }
 
   .fotos .quitar {

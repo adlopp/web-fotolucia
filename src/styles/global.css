@@ -228,6 +228,18 @@ h3 {
   color: var(--texto);
 }
 
+.pie .redes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.pie .redes a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Iconos de la cabecera: modo nocturno y candado del panel */
 .cabecera nav .icono {
   display: inline-flex;

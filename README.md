@@ -4,7 +4,7 @@ Portfolio de fotografía con blog, hecho como sitio estático (Astro),
 desplegado gratis en GitHub Pages y con un panel de administración propio
 para gestionar las fotos sin tocar código.
 
-Web publicada: https://adlopp.github.io/web-fotolucia/
+Web publicada: https://fotolucia.github.io/
 
 ## Cómo está organizado este repo
 

@@ -16,7 +16,7 @@ console.log("\nConfiguración del acceso al panel de administración\n");
 const usuario = (await preguntar("Usuario: ")).trim();
 const clave = await preguntar("Contraseña: ");
 const token = (await preguntar("Token de GitHub (déjalo vacío para usar solo en local): ")).trim();
-const repo = (await preguntar("Repositorio [adlopp/web-fotolucia]: ")).trim() || "adlopp/web-fotolucia";
+const repo = (await preguntar("Repositorio [fotolucia/fotolucia.github.io]: ")).trim() || "fotolucia/fotolucia.github.io";
 const rama = (await preguntar("Rama [main]: ")).trim() || "main";
 rl.close();
 
