@@ -1,0 +1,33 @@
+{
+  "titulo": "Paisajes",
+  "descripcion": "Lugares que me hicieron parar y mirar despacio.",
+  "portada": "/uploads/paisajes/montana.jpg",
+  "orden": 3,
+  "fotos": [
+    {
+      "imagen": "/uploads/paisajes/montana.jpg",
+      "titulo": "Espejo alpino",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/paisajes/costa.jpg",
+      "titulo": "Mediterráneo",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/paisajes/bosque.jpg",
+      "titulo": "Niebla",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/paisajes/desierto.jpg",
+      "titulo": "Dunas",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/paisajes/campos.jpg",
+      "titulo": "Lavanda",
+      "pie": ""
+    }
+  ]
+}

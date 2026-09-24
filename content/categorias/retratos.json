@@ -1,0 +1,33 @@
+{
+  "titulo": "Retratos",
+  "descripcion": "Personas, miradas y las historias que cuentan.",
+  "portada": "/uploads/retratos/mujer-ventana.jpg",
+  "orden": 2,
+  "fotos": [
+    {
+      "imagen": "/uploads/retratos/mujer-ventana.jpg",
+      "titulo": "Luz de mañana",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/retratos/anciano.jpg",
+      "titulo": "El pescador",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/retratos/nina-campo.jpg",
+      "titulo": "Hora dorada",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/retratos/hombre-cafe.jpg",
+      "titulo": "Café de las cinco",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/retratos/bailarina.jpg",
+      "titulo": "Duende",
+      "pie": ""
+    }
+  ]
+}

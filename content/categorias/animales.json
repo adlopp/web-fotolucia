@@ -1,0 +1,33 @@
+{
+  "titulo": "Animales",
+  "descripcion": "Retratos de la vida salvaje y de los animales que nos acompañan.",
+  "portada": "/uploads/animales/zorro.jpg",
+  "orden": 1,
+  "fotos": [
+    {
+      "imagen": "/uploads/animales/zorro.jpg",
+      "titulo": "Zorro en la nieve",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/animales/buho.jpg",
+      "titulo": "Lechuza al anochecer",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/animales/ciervo.jpg",
+      "titulo": "Amanecer en el prado",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/animales/gato.jpg",
+      "titulo": "Siesta al sol",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/animales/caballo.jpg",
+      "titulo": "Libres",
+      "pie": ""
+    }
+  ]
+}

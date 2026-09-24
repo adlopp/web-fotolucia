@@ -1,0 +1,28 @@
+---
+import Base from "../../layouts/Base.astro";
+import TarjetaEntrada from "../../components/TarjetaEntrada.astro";
+import { entradasOrdenadas } from "../../lib";
+
+const entradas = await entradasOrdenadas();
+---
+
+<Base titulo="Blog">
+  <section class="intro">
+    <h1>Blog</h1>
+    <p>Viajes, técnica y las historias detrás de las fotos.</p>
+  </section>
+
+  {entradas.length === 0 && <p>Aún no hay entradas.</p>}
+
+  <div class="entradas">
+    {entradas.map((e) => <TarjetaEntrada entrada={e} />)}
+  </div>
+</Base>
+
+<style>
+  .entradas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 56px 32px;
+  }
+</style>

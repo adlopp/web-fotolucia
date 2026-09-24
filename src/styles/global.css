@@ -1,0 +1,204 @@
+:root {
+  --fondo: #faf8f5;
+  --texto: #1f1d1a;
+  --suave: #75706a;
+  --linea: #e6e1da;
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans: "Inter", system-ui, sans-serif;
+  --ancho: 1240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 0 16px 80px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/* ---------- Cabecera ---------- */
+.cabecera {
+  width: 100%;
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 28px 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.9rem;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+
+.logo span {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--suave);
+  margin-left: 12px;
+}
+
+.cabecera nav {
+  display: flex;
+  gap: 28px;
+}
+
+.cabecera nav a {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.cabecera nav a:hover,
+.cabecera nav a.activo {
+  border-color: currentColor;
+}
+
+@media (max-width: 560px) {
+  .logo span {
+    display: none;
+  }
+  .cabecera nav {
+    gap: 18px;
+  }
+}
+
+/* ---------- Títulos de página ---------- */
+.intro {
+  padding: 48px 0 40px;
+  max-width: 640px;
+}
+
+.intro h1 {
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+}
+
+.intro p {
+  color: var(--suave);
+  margin: 12px 0 0;
+}
+
+.etiqueta {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.seccion-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 96px 0 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--linea);
+}
+
+.seccion-titulo h2 {
+  font-size: 2rem;
+}
+
+.enlace-flecha {
+  font-size: 0.78rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.enlace-flecha:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ---------- Pie ---------- */
+.pie {
+  width: 100%;
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 32px 16px 40px;
+  border-top: 1px solid var(--linea);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--suave);
+}
+
+.pie p {
+  margin: 0;
+}
+
+.pie a {
+  text-decoration: none;
+}
+
+.pie a:hover {
+  color: var(--texto);
+}
+
+.cabecera nav a.acceso {
+  display: inline-flex;
+  align-self: center;
+  padding: 0 0 3px;
+  color: var(--suave);
+}
+
+.cabecera nav a.acceso:hover,
+.cabecera nav a.acceso.activo {
+  color: var(--texto);
+}

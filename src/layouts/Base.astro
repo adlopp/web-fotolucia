@@ -1,0 +1,66 @@
+---
+import "../styles/global.css";
+import { SITE, url } from "../site";
+
+interface Props {
+  titulo?: string;
+  descripcion?: string;
+  noindex?: boolean;
+}
+const { titulo, descripcion = SITE.descripcion, noindex = false } = Astro.props;
+const tituloCompleto = titulo ? `${titulo} · ${SITE.nombre}` : `${SITE.nombre} · ${SITE.subtitulo}`;
+const ruta = Astro.url.pathname;
+const activo = (href: string) => ruta.startsWith(url(href));
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{tituloCompleto}</title>
+    <meta name="description" content={descripcion} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="icon" href={url("/favicon.svg")} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="cabecera">
+      <a href={url("/")} class="logo">
+        {SITE.nombre}<span>{SITE.subtitulo}</span>
+      </a>
+      <nav>
+        <a href={url("/fotografias")} class:list={{ activo: activo("/fotografias") }}>Fotografías</a>
+        <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }}>Contacto</a>
+        <a
+          href={url("/admin")}
+          class:list={["acceso", { activo: activo("/admin") }]}
+          aria-label="Administración"
+          title="Administración"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+          </svg>
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="pie">
+      <p>© {new Date().getFullYear()} {SITE.nombre}</p>
+      <p>
+        <a href={url("/fotografias")}>Fotografías</a> · <a href={url("/blog")}>Blog</a> ·
+        <a href={url("/contacto")}>Contacto</a>
+      </p>
+    </footer>
+  </body>
+</html>

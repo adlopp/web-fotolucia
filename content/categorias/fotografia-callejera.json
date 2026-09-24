@@ -1,0 +1,33 @@
+{
+  "titulo": "Fotografía callejera",
+  "descripcion": "Momentos cotidianos que pasan una sola vez.",
+  "portada": "/uploads/callejera/lluvia.jpg",
+  "orden": 4,
+  "fotos": [
+    {
+      "imagen": "/uploads/callejera/lluvia.jpg",
+      "titulo": "Paraguas rojo",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/callejera/mercado.jpg",
+      "titulo": "Mercado",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/callejera/metro.jpg",
+      "titulo": "Hora punta",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/callejera/bicicleta.jpg",
+      "titulo": "Callejón",
+      "pie": ""
+    },
+    {
+      "imagen": "/uploads/callejera/musico.jpg",
+      "titulo": "La plaza",
+      "pie": ""
+    }
+  ]
+}

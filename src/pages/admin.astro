@@ -1,0 +1,490 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base titulo="Administración" noindex>
+  <!-- Acceso -->
+  <section id="login" class="login">
+    <h1>Acceso</h1>
+    <p class="suave">Panel de administración</p>
+    <form id="form-login">
+      <label>
+        Usuario
+        <input name="usuario" autocomplete="username" required />
+      </label>
+      <label>
+        Contraseña
+        <input name="clave" type="password" autocomplete="current-password" required />
+      </label>
+      <p class="error" id="error-login" role="alert"></p>
+      <button type="submit" class="boton principal">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Panel -->
+  <section id="panel" class="panel" hidden>
+    <div class="panel-cabecera">
+      <h1>Panel de administración</h1>
+      <nav class="pestanas">
+        <button type="button" data-vista="categorias" class="activa">Categorías</button>
+        <button type="button" data-vista="blog">Blog</button>
+        <button type="button" id="cerrar-panel" class="cerrar">Cerrar panel</button>
+      </nav>
+    </div>
+
+    <p class="aviso" id="aviso-local" hidden>
+      Modo local: los cambios se guardan en los archivos de este ordenador.
+    </p>
+    <p class="estado" id="estado" role="status"></p>
+
+    <!-- 1. Categorías -->
+    <div class="vista" data-vista="categorias">
+      <div class="vista-cabecera">
+        <h2>Categorías</h2>
+        <button type="button" class="boton principal" id="nueva-categoria">+ Añadir categoría</button>
+      </div>
+      <ul class="lista" id="lista-categorias"></ul>
+    </div>
+
+    <!-- 1b. Modificar categoría -->
+    <div class="vista" data-vista="editar" hidden>
+      <button type="button" class="volver" id="volver-categorias">← Categorías</button>
+      <h2 id="editar-titulo"></h2>
+
+      <label class="campo">
+        Nombre de la categoría
+        <input id="editar-nombre" />
+      </label>
+
+      <div class="vista-cabecera">
+        <h3>Fotos <span class="suave" id="editar-contador"></span></h3>
+        <label class="boton">
+          + Añadir imágenes desde tu ordenador
+          <input type="file" id="editar-subir" accept="image/*" multiple hidden />
+        </label>
+      </div>
+      <ul class="fotos" id="editar-fotos"></ul>
+
+      <div class="acciones">
+        <button type="button" class="boton" id="editar-cancelar">Cancelar</button>
+        <button type="button" class="boton principal" id="editar-guardar">Guardar cambios</button>
+      </div>
+    </div>
+
+    <!-- 2. Blog -->
+    <div class="vista" data-vista="blog" hidden>
+      <div class="vista-cabecera">
+        <h2>Blog</h2>
+        <span class="etiqueta-obra">En construcción</span>
+      </div>
+      <div class="opciones-blog">
+        <button type="button" class="boton" disabled>+ Añadir entrada</button>
+        <button type="button" class="boton" disabled>Modificar entrada</button>
+        <button type="button" class="boton" disabled>Borrar entrada</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Diálogo: nombre de nueva categoría -->
+  <dialog id="dialogo-nombre" class="dialogo">
+    <form method="dialog">
+      <h3>Nueva categoría</h3>
+      <label class="campo">
+        Nombre
+        <input name="nombre" required />
+      </label>
+      <p class="error" id="error-nombre"></p>
+      <div class="acciones">
+        <button type="button" class="boton" value="cancelar" data-cerrar>Cancelar</button>
+        <button type="submit" class="boton principal" value="ok">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo: confirmación -->
+  <dialog id="dialogo-confirmar" class="dialogo">
+    <form method="dialog">
+      <h3 id="confirmar-titulo">¿Estás segura?</h3>
+      <p id="confirmar-texto"></p>
+      <div class="acciones">
+        <button type="button" class="boton" data-cerrar>Cancelar</button>
+        <button type="submit" class="boton peligro" value="ok">Sí, eliminar</button>
+      </div>
+    </form>
+  </dialog>
+</Base>
+
+<style is:global>
+  .suave {
+    color: var(--suave);
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3rem);
+  }
+
+  h2 {
+    font-size: 1.9rem;
+  }
+
+  h3 {
+    font-size: 1.4rem;
+  }
+
+  /* Formularios */
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--suave);
+  }
+
+  input:not([type="file"]) {
+    font: inherit;
+    font-size: 1rem;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--texto);
+    padding: 12px 14px;
+    border: 1px solid var(--linea);
+    background: #fff;
+    border-radius: 2px;
+    width: 100%;
+  }
+
+  input:focus {
+    outline: 2px solid var(--texto);
+    outline-offset: -1px;
+  }
+
+  .error {
+    color: #a3342b;
+    font-size: 0.9rem;
+    min-height: 1.4em;
+    margin: 0;
+  }
+
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 12px 18px;
+    border: 1px solid var(--texto);
+    background: transparent;
+    color: var(--texto);
+    cursor: pointer;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .boton:hover:not(:disabled) {
+    background: var(--texto);
+    color: var(--fondo);
+  }
+
+  .boton.principal {
+    background: var(--texto);
+    color: var(--fondo);
+  }
+
+  .boton.principal:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  .boton.peligro {
+    background: #a3342b;
+    border-color: #a3342b;
+    color: #fff;
+  }
+
+  .boton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Acceso */
+  .login {
+    max-width: 380px;
+    margin: 64px auto 0;
+  }
+
+  .login p.suave {
+    margin: 6px 0 32px;
+  }
+
+  .login form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* Panel */
+  .panel-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    padding: 40px 0 20px;
+    border-bottom: 1px solid var(--linea);
+  }
+
+  .pestanas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pestanas button {
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--suave);
+  }
+
+  .pestanas button:hover,
+  .pestanas button.activa {
+    color: var(--texto);
+    border-color: var(--texto);
+  }
+
+  .pestanas .cerrar {
+    color: #a3342b;
+  }
+
+  .aviso {
+    margin: 16px 0 0;
+    font-size: 0.85rem;
+    color: var(--suave);
+  }
+
+  .estado {
+    min-height: 1.6em;
+    margin: 16px 0 0;
+    font-size: 0.95rem;
+  }
+
+  .estado.ok {
+    color: #2f6b3a;
+  }
+
+  .estado.mal {
+    color: #a3342b;
+  }
+
+  .vista {
+    padding-top: 16px;
+  }
+
+  .vista-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0 24px;
+  }
+
+  /* Lista de categorías */
+  .lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--linea);
+  }
+
+  .lista li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--linea);
+  }
+
+  .lista img,
+  .lista .sin-foto {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    background: var(--linea);
+    flex-shrink: 0;
+  }
+
+  .lista .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lista .nombre {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    display: block;
+  }
+
+  .lista .contador {
+    font-size: 0.85rem;
+    color: var(--suave);
+  }
+
+  .lista .botones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 560px) {
+    .lista li {
+      flex-wrap: wrap;
+    }
+    .lista .botones {
+      width: 100%;
+      justify-content: stretch;
+    }
+    .lista .botones .boton {
+      flex: 1;
+    }
+  }
+
+  /* Editar categoría */
+  .volver {
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: var(--suave);
+    margin: 8px 0 16px;
+  }
+
+  .volver:hover {
+    color: var(--texto);
+  }
+
+  .campo {
+    max-width: 420px;
+    margin: 24px 0 8px;
+  }
+
+  .fotos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .fotos li {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--linea);
+  }
+
+  .fotos img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fotos .nueva::after {
+    content: "Nueva";
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    background: var(--texto);
+    color: var(--fondo);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+  }
+
+  .fotos .quitar {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, 0.92);
+    color: #a3342b;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  .fotos .quitar:hover {
+    background: #a3342b;
+    color: #fff;
+  }
+
+  .acciones {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 32px;
+  }
+
+  /* Blog */
+  .etiqueta-obra {
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: #f1e6c8;
+    color: #6e5617;
+    padding: 4px 10px;
+  }
+
+  .opciones-blog {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Diálogos */
+  .dialogo {
+    border: 0;
+    padding: 32px;
+    width: min(440px, calc(100vw - 32px));
+    background: var(--fondo);
+    color: var(--texto);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+
+  .dialogo::backdrop {
+    background: rgba(20, 19, 17, 0.5);
+  }
+
+  .dialogo .campo {
+    margin: 20px 0 4px;
+    max-width: none;
+  }
+
+  .dialogo .acciones {
+    margin-top: 20px;
+  }
+</style>
+
+<script>
+  import "../admin/panel";
+</script>

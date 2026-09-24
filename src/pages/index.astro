@@ -1,0 +1,42 @@
+---
+import Base from "../layouts/Base.astro";
+import Categorias from "../components/Categorias.astro";
+import TarjetaEntrada from "../components/TarjetaEntrada.astro";
+import { entradasOrdenadas } from "../lib";
+import { url } from "../site";
+
+const ultimas = (await entradasOrdenadas()).slice(0, 3);
+---
+
+<Base>
+  <section class="intro">
+    <h1>Mirar despacio</h1>
+    <p>Animales, personas, lugares y calles. Fotografías y algunas historias detrás de ellas.</p>
+  </section>
+
+  <Categorias />
+
+  {
+    ultimas.length > 0 && (
+      <section>
+        <div class="seccion-titulo">
+          <h2>Del blog</h2>
+          <a href={url("/blog")} class="enlace-flecha">Ver todo →</a>
+        </div>
+        <div class="entradas">
+          {ultimas.map((e) => (
+            <TarjetaEntrada entrada={e} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .entradas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 40px 32px;
+  }
+</style>

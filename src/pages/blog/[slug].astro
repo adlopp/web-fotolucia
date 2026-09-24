@@ -1,0 +1,97 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { entradasOrdenadas } from "../../lib";
+import { formatoFecha, url } from "../../site";
+
+export async function getStaticPaths() {
+  const entradas = await entradasOrdenadas();
+  return entradas.map((entrada) => ({ params: { slug: entrada.id }, props: { entrada } }));
+}
+
+const { entrada } = Astro.props;
+const { titulo, fecha, portada, resumen } = entrada.data;
+const { Content } = await render(entrada);
+---
+
+<Base titulo={titulo} descripcion={resumen ?? undefined}>
+  <article>
+    <header>
+      <a href={url("/blog")} class="etiqueta volver">← Blog</a>
+      <h1>{titulo}</h1>
+      <time class="etiqueta" datetime={fecha.toISOString()}>{formatoFecha(fecha)}</time>
+    </header>
+
+    {portada && <img class="portada" src={url(portada)} alt="" />}
+
+    <div class="texto">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  article header {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+
+  .volver {
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(2.3rem, 6vw, 3.4rem);
+    margin-bottom: 16px;
+  }
+
+  .portada {
+    width: 100%;
+    max-height: 78vh;
+    object-fit: cover;
+    margin-bottom: 56px;
+  }
+
+  .texto {
+    max-width: 660px;
+    margin: 0 auto;
+    font-size: 1.08rem;
+    line-height: 1.85;
+  }
+
+  .texto :global(h2) {
+    font-size: 2rem;
+    margin: 48px 0 12px;
+  }
+
+  .texto :global(h3) {
+    font-size: 1.5rem;
+    margin: 36px 0 8px;
+  }
+
+  .texto :global(img) {
+    margin: 40px auto;
+  }
+
+  .texto :global(blockquote) {
+    margin: 40px 0;
+    padding: 0 0 0 24px;
+    border-left: 1px solid var(--texto);
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  .texto :global(blockquote p) {
+    margin: 0;
+  }
+
+  .texto :global(a) {
+    text-underline-offset: 4px;
+  }
+</style>
