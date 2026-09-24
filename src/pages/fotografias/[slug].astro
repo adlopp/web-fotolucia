@@ -17,7 +17,7 @@ const { titulo, descripcion, fotos } = categoria.data;
 
 <Base titulo={titulo} descripcion={descripcion ?? undefined}>
   <section class="intro">
-    <a href={url("/fotografias")} class="etiqueta volver">← Fotografías</a>
+    <a href={url("/")} class="etiqueta volver">← Fotografías</a>
     <h1>{titulo}</h1>
     {descripcion && <p>{descripcion}</p>}
   </section>

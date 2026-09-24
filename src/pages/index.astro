@@ -1,22 +1,13 @@
 ---
-// La web empieza siempre en /fotografias/: esta página solo redirige allí
-import { SITE, url } from "../site";
-const destino = url("/fotografias/");
+import Base from "../layouts/Base.astro";
+import Categorias from "../components/Categorias.astro";
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>{SITE.nombre} · {SITE.subtitulo}</title>
-    <meta name="robots" content="noindex" />
-    <link rel="canonical" href={destino} />
-    <meta http-equiv="refresh" content={`0; url=${destino}`} />
-    <script is:inline define:vars={{ destino }}>
-      location.replace(destino);
-    </script>
-  </head>
-  <body>
-    <a href={destino}>Ir a Fotografías</a>
-  </body>
-</html>
+<!-- Portada de la web = sección Fotografías. El blog solo aparece al pulsar «Blog» -->
+<Base titulo="Fotografías">
+  <section class="intro">
+    <h1>Fotografías</h1>
+    <p>Animales, personas, lugares y calles. Fotografías y algunas historias detrás de ellas.</p>
+  </section>
+  <Categorias />
+</Base>

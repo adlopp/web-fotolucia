@@ -127,7 +127,7 @@ $("#cerrar-panel").addEventListener("click", () => {
   try {
     sessionStorage.removeItem(CLAVE_SESION);
   } catch {}
-  location.href = `${BASE}/fotografias/`;
+  location.href = `${BASE}/`;
 });
 
 // ---------- vistas ----------

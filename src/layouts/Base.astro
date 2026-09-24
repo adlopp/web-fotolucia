@@ -12,6 +12,9 @@ const { titulo, descripcion = SITE.descripcion, noindex = false } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITE.nombre}` : `${SITE.nombre} · ${SITE.subtitulo}`;
 const ruta = Astro.url.pathname;
 const activo = (href: string) => ruta.startsWith(url(href));
+// «Fotografías» es la portada y también cada categoría (/fotografias/animales…)
+const sinBarraFinal = (r: string) => r.replace(/\/$/, "");
+const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo("/fotografias");
 ---
 
 <!doctype html>
@@ -43,11 +46,11 @@ const activo = (href: string) => ruta.startsWith(url(href));
   </head>
   <body>
     <header class="cabecera">
-      <a href={url("/fotografias/")} class="logo">
+      <a href={url("/")} class="logo">
         {SITE.nombre}<span>{SITE.subtitulo}</span>
       </a>
       <nav>
-        <a href={url("/fotografias")} class:list={{ activo: activo("/fotografias") }}>Fotografías</a>
+        <a href={url("/")} class:list={{ activo: esFotografias }}>Fotografías</a>
         <a href={url("/blog")} class:list={{ activo: activo("/blog") }}>Blog</a>
         <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }}>Contacto</a>
         <button type="button" class="icono tema" id="cambiar-tema" data-cambiar-tema>
@@ -91,7 +94,7 @@ const activo = (href: string) => ruta.startsWith(url(href));
         </a>
       </p>
       <p>
-        <a href={url("/fotografias")}>Fotografías</a> · <a href={url("/blog")}>Blog</a> ·
+        <a href={url("/")}>Fotografías</a> · <a href={url("/blog")}>Blog</a> ·
         <a href={url("/contacto")}>Contacto</a>
       </p>
     </footer>
