@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import IconosTema from "../components/IconosTema.astro";
 ---
 
 <Base titulo="Administración" noindex>
@@ -29,7 +28,6 @@ import IconosTema from "../components/IconosTema.astro";
       <nav class="pestanas">
         <button type="button" data-vista="categorias" class="activa">Categorías</button>
         <button type="button" data-vista="blog">Blog</button>
-        <button type="button" class="tema tema-panel" data-cambiar-tema><IconosTema /></button>
         <button type="button" id="cerrar-panel" class="cerrar">Cerrar panel</button>
       </nav>
     </div>
@@ -489,11 +487,6 @@ import IconosTema from "../components/IconosTema.astro";
     object-fit: contain;
     background: var(--linea);
     margin-top: 16px;
-  }
-
-  .pestanas .tema-panel {
-    display: inline-flex;
-    align-items: center;
   }
 
   .fotos .quitar {

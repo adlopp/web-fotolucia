@@ -82,7 +82,7 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
             <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
             <circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"></circle>
           </svg>
-          @{SITE.instagram}
+          {SITE.instagram}
         </a>
         <a href={`mailto:${SITE.correo}`}>
           <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
@@ -99,7 +99,20 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
     </footer>
 
     <script>
-      // Botones de modo nocturno (cabecera y panel de administración)
+      // Logo: vuelve al inicio recargando la web de verdad. GitHub Pages deja las páginas
+      // guardadas en el navegador unos minutos; así se ven siempre las fotos más recientes.
+      const logo = document.querySelector<HTMLAnchorElement>(".logo")!;
+      logo.addEventListener("click", async (e) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return; // abrir en otra pestaña, normal
+        e.preventDefault();
+        try {
+          await fetch(logo.href, { cache: "reload" });
+        } catch {}
+        if (location.href === logo.href) location.reload();
+        else location.href = logo.href;
+      });
+
+      // Botón de modo nocturno
       const raiz = document.documentElement;
       const botones = document.querySelectorAll<HTMLButtonElement>("[data-cambiar-tema]");
       const actualizarBotones = () => {
