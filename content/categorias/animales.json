@@ -1,9 +1,14 @@
 {
   "titulo": "Animales",
   "descripcion": "Retratos de la vida salvaje y de los animales que nos acompañan.",
-  "portada": "/uploads/animales/zorro.jpg",
+  "portada": "/uploads/animales/img-8442-mufez3cdj0y.jpg",
   "orden": 1,
   "fotos": [
+    {
+      "imagen": "/uploads/animales/img-8442-mufez3cdj0y.jpg",
+      "titulo": "Nami",
+      "pie": ""
+    },
     {
       "imagen": "/uploads/animales/zorro.jpg",
       "titulo": "Zorro en la nieve",
@@ -33,11 +38,7 @@
       "imagen": "/uploads/animales/cat-cursed-mufchow3.jpg",
       "titulo": "Gato Farmeador de Aura",
       "pie": ""
-    },
-    {
-      "imagen": "/uploads/animales/img-8442-mufez3cdj0y.jpg",
-      "titulo": "Nami",
-      "pie": ""
     }
-  ]
+  ],
+  "tituloEn": ""
 }
