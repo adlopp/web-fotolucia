@@ -37,7 +37,8 @@
     {
       "imagen": "/uploads/animales/cat-cursed-mufchow3.jpg",
       "titulo": "Gato Farmeador de Aura",
-      "pie": ""
+      "pie": "",
+      "tituloEn": "Cat Farming Aura"
     }
   ],
   "tituloEn": "Animals",
