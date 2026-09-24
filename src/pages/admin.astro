@@ -150,7 +150,7 @@ import Base from "../layouts/Base.astro";
     color: var(--texto);
     padding: 12px 14px;
     border: 1px solid var(--linea);
-    background: #fff;
+    background: var(--campo);
     border-radius: 2px;
     width: 100%;
   }
@@ -161,7 +161,7 @@ import Base from "../layouts/Base.astro";
   }
 
   .error {
-    color: #a3342b;
+    color: var(--peligro);
     font-size: 0.9rem;
     min-height: 1.4em;
     margin: 0;
@@ -200,9 +200,9 @@ import Base from "../layouts/Base.astro";
   }
 
   .boton.peligro {
-    background: #a3342b;
-    border-color: #a3342b;
-    color: #fff;
+    background: var(--peligro);
+    border-color: var(--peligro);
+    color: var(--fondo);
   }
 
   .boton:disabled {
@@ -263,7 +263,7 @@ import Base from "../layouts/Base.astro";
   }
 
   .pestanas .cerrar {
-    color: #a3342b;
+    color: var(--peligro);
   }
 
   .aviso {
@@ -279,11 +279,11 @@ import Base from "../layouts/Base.astro";
   }
 
   .estado.ok {
-    color: #2f6b3a;
+    color: var(--exito);
   }
 
   .estado.mal {
-    color: #a3342b;
+    color: var(--peligro);
   }
 
   .vista {
@@ -425,16 +425,16 @@ import Base from "../layouts/Base.astro";
     height: 30px;
     border-radius: 50%;
     border: 0;
-    background: rgba(255, 255, 255, 0.92);
-    color: #a3342b;
+    background: var(--fondo);
+    color: var(--peligro);
     font-size: 1rem;
     cursor: pointer;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   }
 
   .fotos .quitar:hover {
-    background: #a3342b;
-    color: #fff;
+    background: var(--peligro);
+    color: var(--fondo);
   }
 
   .acciones {
@@ -450,8 +450,8 @@ import Base from "../layouts/Base.astro";
     font-size: 0.72rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    background: #f1e6c8;
-    color: #6e5617;
+    background: var(--aviso-fondo);
+    color: var(--aviso-texto);
     padding: 4px 10px;
   }
 

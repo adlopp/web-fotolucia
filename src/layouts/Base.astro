@@ -11,6 +11,8 @@ const { titulo, descripcion = SITE.descripcion, noindex = false } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITE.nombre}` : `${SITE.nombre} · ${SITE.subtitulo}`;
 const ruta = Astro.url.pathname;
 const activo = (href: string) => ruta.startsWith(url(href));
+// La portada también es «Fotografías»
+const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
 ---
 
 <!doctype html>
@@ -28,6 +30,17 @@ const activo = (href: string) => ruta.startsWith(url(href));
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
+    <!-- Aplica el modo nocturno antes de pintar la página (evita un parpadeo en blanco) -->
+    <script is:inline>
+      (function () {
+        var tema = null;
+        try {
+          tema = localStorage.getItem("tema");
+        } catch (e) {}
+        if (!tema) tema = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+        document.documentElement.dataset.tema = tema;
+      })();
+    </script>
   </head>
   <body>
     <header class="cabecera">
@@ -35,11 +48,21 @@ const activo = (href: string) => ruta.startsWith(url(href));
         {SITE.nombre}<span>{SITE.subtitulo}</span>
       </a>
       <nav>
-        <a href={url("/fotografias")} class:list={{ activo: activo("/fotografias") }}>Fotografías</a>
+        <a href={url("/fotografias")} class:list={{ activo: esPortada || activo("/fotografias") }}>Fotografías</a>
+        <a href={url("/blog")} class:list={{ activo: activo("/blog") }}>Blog</a>
         <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }}>Contacto</a>
+        <button type="button" class="icono tema" id="cambiar-tema" aria-label="Activar modo nocturno" title="Modo nocturno">
+          <svg class="luna" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+          </svg>
+          <svg class="sol" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+            <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+          </svg>
+        </button>
         <a
           href={url("/admin")}
-          class:list={["acceso", { activo: activo("/admin") }]}
+          class:list={["icono", { activo: activo("/admin") }]}
           aria-label="Administración"
           title="Administración"
         >
@@ -62,5 +85,23 @@ const activo = (href: string) => ruta.startsWith(url(href));
         <a href={url("/contacto")}>Contacto</a>
       </p>
     </footer>
+
+    <script>
+      const boton = document.getElementById("cambiar-tema")!;
+      const raiz = document.documentElement;
+      const actualizarBoton = () => {
+        const oscuro = raiz.dataset.tema === "oscuro";
+        boton.setAttribute("aria-label", oscuro ? "Activar modo claro" : "Activar modo nocturno");
+        boton.title = oscuro ? "Modo claro" : "Modo nocturno";
+      };
+      actualizarBoton();
+      boton.addEventListener("click", () => {
+        raiz.dataset.tema = raiz.dataset.tema === "oscuro" ? "claro" : "oscuro";
+        try {
+          localStorage.setItem("tema", raiz.dataset.tema);
+        } catch {}
+        actualizarBoton();
+      });
+    </script>
   </body>
 </html>

@@ -3,9 +3,33 @@
   --texto: #1f1d1a;
   --suave: #75706a;
   --linea: #e6e1da;
+  --campo: #ffffff;
+  --peligro: #a3342b;
+  --exito: #2f6b3a;
+  --aviso-fondo: #f1e6c8;
+  --aviso-texto: #6e5617;
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Inter", system-ui, sans-serif;
   --ancho: 1240px;
+  color-scheme: light;
+}
+
+/* Modo nocturno (botón luna/sol de la cabecera) */
+:root[data-tema="oscuro"] {
+  --fondo: #151412;
+  --texto: #ece7df;
+  --suave: #9d968c;
+  --linea: #2d2a26;
+  --campo: #1e1c19;
+  --peligro: #e07a6f;
+  --exito: #7fbf8a;
+  --aviso-fondo: #3a3220;
+  --aviso-texto: #e3cf96;
+  color-scheme: dark;
+}
+
+body {
+  transition: background-color 0.3s, color 0.3s;
 }
 
 *,
@@ -106,12 +130,25 @@ h3 {
   border-color: currentColor;
 }
 
-@media (max-width: 560px) {
-  .logo span {
-    display: none;
+/* Móvil: el menú baja a una segunda línea, con los iconos a la derecha */
+@media (max-width: 640px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding-bottom: 12px;
   }
   .cabecera nav {
-    gap: 18px;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--linea);
+  }
+  .cabecera nav a {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+  }
+  .cabecera nav .tema {
+    margin-left: auto;
   }
 }
 
@@ -191,14 +228,33 @@ h3 {
   color: var(--texto);
 }
 
-.cabecera nav a.acceso {
+/* Iconos de la cabecera: modo nocturno y candado del panel */
+.cabecera nav .icono {
   display: inline-flex;
   align-self: center;
   padding: 0 0 3px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
   color: var(--suave);
+  cursor: pointer;
 }
 
-.cabecera nav a.acceso:hover,
-.cabecera nav a.acceso.activo {
+.cabecera nav .icono + .icono {
+  margin-left: -10px;
+}
+
+.cabecera nav .icono:hover,
+.cabecera nav .icono.activo {
   color: var(--texto);
+}
+
+/* Luna en modo claro, sol en modo nocturno */
+.tema .sol,
+[data-tema="oscuro"] .tema .luna {
+  display: none;
+}
+
+[data-tema="oscuro"] .tema .sol {
+  display: block;
 }
