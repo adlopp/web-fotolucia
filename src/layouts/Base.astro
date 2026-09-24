@@ -37,8 +37,8 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
         try {
           tema = localStorage.getItem("tema");
         } catch (e) {}
-        if (!tema) tema = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
-        document.documentElement.dataset.tema = tema;
+        // Por defecto, modo claro (solo cambia si el visitante pulsa la luna)
+        document.documentElement.dataset.tema = tema === "oscuro" ? "oscuro" : "claro";
       })();
     </script>
   </head>

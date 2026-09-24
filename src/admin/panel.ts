@@ -51,7 +51,9 @@ function estado(texto: string, tipo: "" | "ok" | "mal" = "") {
   e.className = `estado ${tipo}`;
 }
 
-const MSG_PUBLICADO = LOCAL ? "✓ Guardado." : "✓ Guardado. La web se actualizará en 1–2 minutos.";
+const MSG_PUBLICADO = LOCAL
+  ? "✓ Guardado."
+  : "✓ Guardado. La web se actualizará en 1–2 minutos (si no ves el cambio, recarga la página con Ctrl+F5).";
 
 async function conEstado(texto: string, accion: () => Promise<void>) {
   document.querySelectorAll<HTMLButtonElement>("#panel button").forEach((b) => (b.dataset.bloq = String(b.disabled)));
