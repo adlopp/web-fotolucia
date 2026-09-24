@@ -12,14 +12,14 @@ export async function getStaticPaths() {
 }
 
 const { categoria, siguiente } = Astro.props;
-const { titulo, tituloEn, descripcion, fotos } = categoria.data;
+const { titulo, tituloEn, descripcion, descripcionEn, fotos } = categoria.data;
 ---
 
 <Base titulo={titulo} descripcion={descripcion ?? undefined}>
   <section class="intro">
     <a href={url("/")} class="etiqueta volver" data-en="← Photography">← Fotografías</a>
     <h1 data-en={tituloEn || titulo}>{titulo}</h1>
-    {descripcion && <p>{descripcion}</p>}
+    {descripcion && <p data-en={descripcionEn || descripcion}>{descripcion}</p>}
   </section>
 
   {fotos.length === 0 && <p class="vacio" data-en="No photos in this collection yet.">Todavía no hay fotos en esta categoría.</p>}
@@ -29,11 +29,20 @@ const { titulo, tituloEn, descripcion, fotos } = categoria.data;
       fotos.map((f, i) => (
         <figure>
           <button type="button" class="abrir" data-indice={i} aria-label={`Ampliar ${f.titulo ?? "foto"}`}>
-            <img src={url(f.imagen)} alt={f.titulo ?? ""} loading={i < 4 ? "eager" : "lazy"} />
+            <img
+              src={url(f.imagen)}
+              alt={f.titulo ?? ""}
+              data-en-alt={f.tituloEn || f.titulo || ""}
+              loading={i < 4 ? "eager" : "lazy"}
+            />
           </button>
           {(f.titulo || f.pie) && (
             <figcaption>
-              {f.titulo && <span class="titulo">{f.titulo}</span>}
+              {f.titulo && (
+                <span class="titulo" data-en={f.tituloEn || f.titulo}>
+                  {f.titulo}
+                </span>
+              )}
               {f.pie && <span class="texto-pie">{f.pie}</span>}
             </figcaption>
           )}
@@ -214,7 +223,7 @@ const { titulo, tituloEn, descripcion, fotos } = categoria.data;
 </style>
 
 <script>
-  type Foto = { imagen: string; titulo?: string | null; pie?: string | null };
+  type Foto = { imagen: string; titulo?: string | null; tituloEn?: string | null; pie?: string | null };
   const fotos: Foto[] = JSON.parse(document.getElementById("datos-fotos")?.textContent || "[]");
   const visor = document.querySelector<HTMLDialogElement>(".visor")!;
   const img = visor.querySelector("img")!;
@@ -224,10 +233,18 @@ const { titulo, tituloEn, descripcion, fotos } = categoria.data;
   function mostrar(i: number) {
     actual = (i + fotos.length) % fotos.length;
     const f = fotos[actual];
+    // Respeta el idioma activo (bandera de la cabecera): usa el nombre en inglés si lo hay
+    const enIngles = document.documentElement.dataset.idioma === "en";
+    const titulo = (enIngles && f.tituloEn) || f.titulo;
     img.src = f.imagen;
-    img.alt = f.titulo ?? "";
-    pie.textContent = [f.titulo, f.pie].filter(Boolean).join(" — ");
+    img.alt = titulo ?? "";
+    pie.textContent = [titulo, f.pie].filter(Boolean).join(" — ");
   }
+
+  // Si se cambia de idioma con la foto abierta, actualiza el título que se está viendo
+  document.addEventListener("idioma-cambiado", () => {
+    if (visor.open) mostrar(actual);
+  });
 
   document.querySelectorAll<HTMLButtonElement>(".abrir").forEach((b) =>
     b.addEventListener("click", () => {

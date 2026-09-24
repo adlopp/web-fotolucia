@@ -3,13 +3,14 @@ import { descifrar, type Credenciales, type Secreto } from "./cripto";
 import { almacenGitHub, almacenLocal, textoABase64, type Almacen, type Cambio } from "./almacen";
 import Sortable from "sortablejs";
 
-type Foto = { imagen: string; titulo?: string | null; pie?: string | null };
+type Foto = { imagen: string; titulo?: string | null; tituloEn?: string | null; pie?: string | null };
 type Categoria = {
   slug: string;
   datos: {
     titulo: string;
     tituloEn?: string | null;
     descripcion?: string | null;
+    descripcionEn?: string | null;
     portada?: string | null;
     orden?: number | null;
     fotos: Foto[];
@@ -290,6 +291,8 @@ function abrirEdicion(c: Categoria) {
   $("#editar-titulo").textContent = c.datos.titulo;
   $<HTMLInputElement>("#editar-nombre").value = c.datos.titulo;
   $<HTMLInputElement>("#editar-nombre-en").value = c.datos.tituloEn ?? "";
+  $<HTMLTextAreaElement>("#editar-descripcion").value = c.datos.descripcion ?? "";
+  $<HTMLTextAreaElement>("#editar-descripcion-en").value = c.datos.descripcionEn ?? "";
   pintarFotos();
   mostrarVista("editar");
 }
@@ -351,15 +354,16 @@ function nombrarFoto(i: number) {
   const f = editando.fotos[i];
   fotoNombrando = i;
   $<HTMLImageElement>("#foto-vista").src = f.nueva?.vista ?? urlImagen(f.imagen);
-  const input = dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!;
-  input.value = f.titulo ?? "";
+  dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!.value = f.titulo ?? "";
+  dialogoFoto.querySelector<HTMLInputElement>("input[name=tituloEn]")!.value = f.tituloEn ?? "";
   dialogoFoto.showModal();
-  input.focus();
+  dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!.focus();
 }
 dialogoFoto.querySelector("form")!.addEventListener("submit", (e) => {
   e.preventDefault();
   if (editando && editando.fotos[fotoNombrando]) {
     editando.fotos[fotoNombrando].titulo = dialogoFoto.querySelector<HTMLInputElement>("input[name=titulo]")!.value.trim();
+    editando.fotos[fotoNombrando].tituloEn = dialogoFoto.querySelector<HTMLInputElement>("input[name=tituloEn]")!.value.trim();
     pintarFotos();
   }
   dialogoFoto.close();
@@ -394,13 +398,16 @@ $<HTMLInputElement>("#editar-subir").addEventListener("change", async (e) => {
 $("#volver-categorias").addEventListener("click", salirEdicion);
 $("#editar-cancelar").addEventListener("click", salirEdicion);
 
-// ¿Ha cambiado algo (nombre, fotos, orden o nombres de fotos) desde que se abrió?
+// ¿Ha cambiado algo (nombre, descripción, fotos, orden o nombres de fotos) desde que se abrió?
 function hayCambios() {
   if (!editando) return false;
-  const limpiar = (fotos: FotoEdicion[]) => JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? ""]));
+  const limpiar = (fotos: FotoEdicion[]) =>
+    JSON.stringify(fotos.map((f) => [f.imagen, f.titulo ?? "", f.tituloEn ?? ""]));
   return (
     $<HTMLInputElement>("#editar-nombre").value.trim() !== editando.original.datos.titulo ||
     $<HTMLInputElement>("#editar-nombre-en").value.trim() !== (editando.original.datos.tituloEn ?? "") ||
+    $<HTMLTextAreaElement>("#editar-descripcion").value.trim() !== (editando.original.datos.descripcion ?? "") ||
+    $<HTMLTextAreaElement>("#editar-descripcion-en").value.trim() !== (editando.original.datos.descripcionEn ?? "") ||
     limpiar(editando.fotos) !== limpiar(editando.original.datos.fotos)
   );
 }
@@ -417,6 +424,8 @@ $("#editar-guardar").addEventListener("click", async () => {
   const { original, fotos } = editando;
   const titulo = $<HTMLInputElement>("#editar-nombre").value.trim();
   const tituloEn = $<HTMLInputElement>("#editar-nombre-en").value.trim();
+  const descripcion = $<HTMLTextAreaElement>("#editar-descripcion").value.trim();
+  const descripcionEn = $<HTMLTextAreaElement>("#editar-descripcion-en").value.trim();
   const slug = slugify(titulo);
   if (!slug) {
     estado("✗ El nombre no puede estar vacío.", "mal");
@@ -438,6 +447,8 @@ $("#editar-guardar").addEventListener("click", async () => {
     ...original.datos,
     titulo,
     tituloEn: tituloEn || "",
+    descripcion: descripcion || "",
+    descripcionEn: descripcionEn || "",
     portada,
     fotos: fotos.map(({ nueva, ...f }) => f),
   };

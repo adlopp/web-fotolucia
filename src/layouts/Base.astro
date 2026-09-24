@@ -138,8 +138,13 @@ const esFotografias = sinBarraFinal(ruta) === sinBarraFinal(url("/")) || activo(
           el.setAttribute("aria-label", texto);
           el.title = texto;
         });
+        document.querySelectorAll<HTMLImageElement>("[data-en-alt]").forEach((el) => {
+          if (el.dataset.esAlt === undefined) el.dataset.esAlt = el.alt ?? "";
+          el.alt = en ? el.dataset.enAlt || el.dataset.esAlt : el.dataset.esAlt;
+        });
         botonIdioma.setAttribute("aria-label", en ? "Volver al español" : "Traducir a inglés");
         botonIdioma.title = en ? "Volver al español" : "Traducir a inglés";
+        document.dispatchEvent(new CustomEvent("idioma-cambiado", { detail: { idioma: en ? "en" : "es" } }));
       }
       let idiomaGuardado = "es";
       try {

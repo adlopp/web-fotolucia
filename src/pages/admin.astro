@@ -62,6 +62,17 @@ import Base from "../layouts/Base.astro";
         </label>
       </div>
 
+      <div class="campos-nombre">
+        <label class="campo">
+          Descripción (español)
+          <textarea id="editar-descripcion" rows="2" placeholder="Sin descripción"></textarea>
+        </label>
+        <label class="campo">
+          Descripción (inglés)
+          <textarea id="editar-descripcion-en" rows="2" placeholder="Igual que en español"></textarea>
+        </label>
+      </div>
+
       <div class="vista-cabecera">
         <h3>Fotos <span class="suave" id="editar-contador"></span></h3>
         <label class="boton">
@@ -113,10 +124,25 @@ import Base from "../layouts/Base.astro";
     <form method="dialog">
       <h3>Nombre de la foto</h3>
       <img id="foto-vista" alt="" />
-      <label class="campo">
-        Nombre (opcional)
-        <input name="titulo" placeholder="Sin nombre" />
-      </label>
+      <div class="campos-nombre">
+        <label class="campo">
+          Nombre (español)
+          <div class="campo-con-bandera">
+            <input name="titulo" placeholder="Sin nombre" />
+            <svg class="bandera-fija" viewBox="0 0 30 20" width="18" height="12" aria-hidden="true">
+              <rect width="30" height="20" fill="#00247d"></rect>
+              <path d="M0 0 30 20M30 0 0 20" stroke="#fff" stroke-width="4"></path>
+              <path d="M0 0 30 20M30 0 0 20" stroke="#cf142b" stroke-width="1.6"></path>
+              <path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"></path>
+              <path d="M15 0V20M0 10H30" stroke="#cf142b" stroke-width="3"></path>
+            </svg>
+          </div>
+        </label>
+        <label class="campo">
+          Nombre (inglés)
+          <input name="tituloEn" placeholder="Igual que en español" />
+        </label>
+      </div>
       <div class="acciones">
         <button type="button" class="boton" data-cerrar>Cancelar</button>
         <button type="submit" class="boton principal" value="ok">Aceptar</button>
@@ -165,7 +191,8 @@ import Base from "../layouts/Base.astro";
     color: var(--suave);
   }
 
-  input:not([type="file"]) {
+  input:not([type="file"]),
+  textarea {
     font: inherit;
     font-size: 1rem;
     letter-spacing: normal;
@@ -178,7 +205,13 @@ import Base from "../layouts/Base.astro";
     width: 100%;
   }
 
-  input:focus {
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input:focus,
+  textarea:focus {
     outline: 2px solid var(--texto);
     outline-offset: -1px;
   }
@@ -415,6 +448,23 @@ import Base from "../layouts/Base.astro";
   .campos-nombre .campo {
     flex: 1;
     min-width: 200px;
+  }
+
+  /* Bandera decorativa al final del campo de nombre en español, en el diálogo de la foto */
+  .campo-con-bandera {
+    position: relative;
+  }
+
+  .campo-con-bandera input {
+    padding-right: 40px;
+  }
+
+  .campo-con-bandera .bandera-fija {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .fotos {
