@@ -28,6 +28,11 @@
       "imagen": "/uploads/animales/caballo.jpg",
       "titulo": "Libres",
       "pie": ""
+    },
+    {
+      "imagen": "/uploads/animales/cat-cursed-mufchow3.jpg",
+      "titulo": "",
+      "pie": ""
     }
   ]
 }
