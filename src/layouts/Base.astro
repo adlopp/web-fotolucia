@@ -12,8 +12,6 @@ const { titulo, descripcion = SITE.descripcion, noindex = false } = Astro.props;
 const tituloCompleto = titulo ? `${titulo} · ${SITE.nombre}` : `${SITE.nombre} · ${SITE.subtitulo}`;
 const ruta = Astro.url.pathname;
 const activo = (href: string) => ruta.startsWith(url(href));
-// La portada también es «Fotografías»
-const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
 ---
 
 <!doctype html>
@@ -45,11 +43,11 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
   </head>
   <body>
     <header class="cabecera">
-      <a href={url("/")} class="logo">
+      <a href={url("/fotografias/")} class="logo">
         {SITE.nombre}<span>{SITE.subtitulo}</span>
       </a>
       <nav>
-        <a href={url("/fotografias")} class:list={{ activo: esPortada || activo("/fotografias") }}>Fotografías</a>
+        <a href={url("/fotografias")} class:list={{ activo: activo("/fotografias") }}>Fotografías</a>
         <a href={url("/blog")} class:list={{ activo: activo("/blog") }}>Blog</a>
         <a href={url("/contacto")} class:list={{ activo: activo("/contacto") }}>Contacto</a>
         <button type="button" class="icono tema" id="cambiar-tema" data-cambiar-tema>
@@ -99,8 +97,8 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
     </footer>
 
     <script>
-      // Logo: vuelve al inicio recargando la web de verdad. GitHub Pages deja las páginas
-      // guardadas en el navegador unos minutos; así se ven siempre las fotos más recientes.
+      // Logo: va a Fotografías (el inicio) recargando la web de verdad. GitHub Pages deja las
+      // páginas guardadas en el navegador unos minutos; así se ven siempre las fotos más recientes.
       const logo = document.querySelector<HTMLAnchorElement>(".logo")!;
       logo.addEventListener("click", async (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return; // abrir en otra pestaña, normal
@@ -108,7 +106,9 @@ const esPortada = ruta.replace(/\/$/, "") === url("/").replace(/\/$/, "");
         try {
           await fetch(logo.href, { cache: "reload" });
         } catch {}
-        if (location.href === logo.href) location.reload();
+        const sinBarra = (ruta: string) => ruta.replace(/\/$/, "");
+        const mismaPagina = sinBarra(location.pathname) === sinBarra(new URL(logo.href).pathname);
+        if (mismaPagina) location.reload();
         else location.href = logo.href;
       });
 
