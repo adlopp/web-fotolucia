@@ -36,5 +36,6 @@
     }
   ],
   "tituloEn": "Portraits",
-  "descripcionEn": "People, their expressions, and the stories they tell."
+  "descripcionEn": "People, their expressions, and the stories they tell.",
+  "oculta": true
 }
