@@ -309,6 +309,9 @@ import { SITE } from "../site";
     try {
       const datos = new FormData(form);
       datos.set("email", correoVerificado); // el correo no vive en el formulario, se añade aquí
+      // Formspree usa este campo como asunto del correo que le llega a Lucía
+      const nombre = String(datos.get("name") ?? "").trim();
+      datos.set("_subject", nombre ? `Foto Lucía · Mensaje de ${nombre}` : "Foto Lucía · Nuevo mensaje de contacto");
       const res = await fetch(form.action, {
         method: "POST",
         headers: { Accept: "application/json" },
