@@ -42,5 +42,6 @@
     }
   ],
   "tituloEn": "Animals",
-  "descripcionEn": "Portraits of wildlife and the animals that share our lives."
+  "descripcionEn": "Portraits of wildlife and the animals that share our lives.",
+  "oculta": true
 }
