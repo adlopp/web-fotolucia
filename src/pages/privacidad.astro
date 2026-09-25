@@ -1,0 +1,76 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../site";
+---
+
+<Base titulo="Privacidad" descripcion="Qué datos se recogen en esta web y para qué se usan.">
+  <section class="intro">
+    <h1 data-en="Privacy">Privacidad</h1>
+    <p data-en="A short, honest explanation of what happens with your data on this site.">
+      Una explicación breve y clara de qué pasa con tus datos en esta web.
+    </p>
+  </section>
+
+  <div class="texto">
+    <h2 data-en="Contact form">Formulario de contacto</h2>
+    <p data-en="If you write to me through the contact form, I receive your name, your Google-verified email address and your message. That's sent through Formspree, the service that delivers it to my inbox, and I use it only to reply to you. I don't share it with anyone else or use it for anything beyond answering your message.">
+      Si me escribes por el formulario de contacto, recibo tu nombre, tu correo (verificado con
+      Google) y tu mensaje. Eso se envía a través de Formspree, el servicio que lo hace llegar a
+      mi correo, y lo uso únicamente para responderte. No lo comparto con nadie más ni lo uso para
+      nada distinto de contestar tu mensaje.
+    </p>
+
+    <h2 data-en="Signing in with Google">Inicio de sesión con Google</h2>
+    <p data-en="The «Sign in with Google» button exists only to confirm that the email address is real, so I can actually reply to you — it's not used to track you or create an account. This site doesn't store that email anywhere by itself; it's only included in the message sent through Formspree, as explained above. The sign-in itself is handled directly by Google, under its own privacy policy.">
+      El botón "Iniciar sesión con Google" solo sirve para confirmar que el correo es real y
+      poder responderte, no para rastrearte ni crear ninguna cuenta. Esta web no guarda ese correo
+      en ningún sitio por su cuenta; solo va dentro del mensaje que se envía por Formspree, como
+      se explica arriba. El propio inicio de sesión lo gestiona Google, bajo su política de
+      privacidad.
+    </p>
+
+    <h2 data-en="What's stored in your browser">Lo que se guarda en tu navegador</h2>
+    <p data-en="This site remembers two small preferences on your own device, never sent anywhere: whether you chose dark mode, and whether you chose to read the site in English. Nothing else is stored, and there are no tracking cookies or analytics of any kind.">
+      Esta web recuerda dos preferencias pequeñas en tu propio dispositivo, que nunca se envían a
+      ningún sitio: si elegiste el modo oscuro, y si elegiste leer la web en inglés. No se guarda
+      nada más, y no hay cookies de rastreo ni ningún tipo de analítica.
+    </p>
+
+    <h2 data-en="Hosting">Alojamiento</h2>
+    <p data-en="This site is hosted on GitHub Pages. Like any website, the hosting provider may keep basic technical access logs (for example, to prevent abuse); this site itself has no access to that information.">
+      Esta web está alojada en GitHub Pages. Como en cualquier web, quien la aloja puede guardar
+      registros técnicos básicos de acceso (por ejemplo, para evitar abusos); esta web en sí no
+      tiene acceso a esa información.
+    </p>
+
+    <h2 data-en="Any questions?">¿Alguna duda?</h2>
+    <p><span data-en="Write to me at">Escríbeme a</span> <a href={`mailto:${SITE.correo}`}>{SITE.correo}</a>.</p>
+  </div>
+</Base>
+
+<style>
+  .texto {
+    max-width: 660px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .texto h2 {
+    font-size: 1.6rem;
+    margin: 44px 0 10px;
+  }
+
+  .texto h2:first-child {
+    margin-top: 0;
+  }
+
+  .texto p {
+    margin: 0;
+    color: var(--suave);
+  }
+
+  .texto a {
+    color: var(--texto);
+  }
+</style>
