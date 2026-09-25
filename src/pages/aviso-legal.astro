@@ -1,0 +1,72 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE, url } from "../site";
+---
+
+<Base titulo="Aviso legal" descripcion="Quién hay detrás de esta web.">
+  <section class="intro">
+    <h1 data-en="Legal notice">Aviso legal</h1>
+    <p data-en="Who's behind this website, as required by Spanish law.">
+      Quién hay detrás de esta web, tal como exige la ley española.
+    </p>
+  </section>
+
+  <div class="texto">
+    <h2 data-en="Identification">Identificación</h2>
+    <p data-en="Who's behind this website:">Quién está detrás de esta web:</p>
+    <ul>
+      <li><strong>Titular:</strong> Lucía López</li>
+      <li><strong>Contacto:</strong> <a href={`mailto:${SITE.correo}`}>{SITE.correo}</a></li>
+    </ul>
+
+    <h2 data-en="What this website is">Qué es esta web</h2>
+    <p data-en="A personal portfolio to showcase photography work. Some visitors may get in touch to commission paid photography services.">
+      Un portfolio personal para enseñar trabajo de fotografía. Algunas personas pueden ponerse en
+      contacto para encargar servicios de fotografía de pago.
+    </p>
+
+    <h2 data-en="More information">Más información</h2>
+    <p>
+      <span data-en="For details on what data is collected and how it's used, see the">Para
+      saber qué datos se recogen y cómo se usan, consulta la</span>{" "}
+      <a href={url("/privacidad")}><span data-en="privacy page">página de privacidad</span></a>.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .texto {
+    max-width: 660px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+
+  .texto h2 {
+    font-size: 1.6rem;
+    margin: 44px 0 10px;
+  }
+
+  .texto h2:first-child {
+    margin-top: 0;
+  }
+
+  .texto p {
+    margin: 0 0 12px;
+    color: var(--suave);
+  }
+
+  .texto ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--suave);
+  }
+
+  .texto li {
+    margin-bottom: 6px;
+  }
+
+  .texto a {
+    color: var(--texto);
+  }
+</style>
