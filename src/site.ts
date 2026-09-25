@@ -8,7 +8,7 @@ export const SITE = {
   // Formulario de contacto: crea una cuenta gratis en https://formspree.io, un formulario nuevo
   // y pega aquí su dirección (algo como "https://formspree.io/f/xxxxxxxx"). Hasta entonces el
   // formulario no puede enviar mensajes.
-  formulario: "https://formspree.io/f/REEMPLAZAR",
+  formulario: "https://formspree.io/f/xqpalnpw",
   // Inicio de sesión con Google, para que el correo de quien escribe sea siempre real (verificado
   // por Google) y no algo que cualquiera pueda inventarse. Se crea gratis en
   // https://console.cloud.google.com/apis/credentials → «Crear credenciales» → «ID de cliente de
