@@ -262,6 +262,22 @@ import { SITE } from "../site";
     mostrarPendiente();
   });
 
+  // ---------- límite de envíos (aviso, no una protección real) ----------
+  // Se guarda en este navegador cuándo se envió el último mensaje. Como no hay servidor,
+  // alguien podría saltárselo borrando los datos del navegador; esto solo frena los despistes
+  // (pulsar «Enviar» varias veces) y a quien no se moleste en sortearlo.
+  const CLAVE_ULTIMO_ENVIO = "ultimoEnvioContacto";
+  const ESPERA_MIN = 20; // como mucho, unos 3 mensajes por hora
+
+  function minutosParaPoderEnviar(): number {
+    try {
+      const ultimo = Number(localStorage.getItem(CLAVE_ULTIMO_ENVIO) || 0);
+      return Math.max(0, Math.ceil(ESPERA_MIN - (Date.now() - ultimo) / 60000));
+    } catch {
+      return 0;
+    }
+  }
+
   // ---------- enviar el formulario ----------
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -279,6 +295,14 @@ import { SITE } from "../site";
       estado.className = "estado mal";
       return;
     }
+    const espera = minutosParaPoderEnviar();
+    if (espera > 0) {
+      estado.textContent = enIngles()
+        ? `Please wait about ${espera} more minute${espera === 1 ? "" : "s"} before sending another message.`
+        : `Espera ${espera} minuto${espera === 1 ? "" : "s"} más antes de enviar otro mensaje.`;
+      estado.className = "estado mal";
+      return;
+    }
     boton.disabled = true;
     estado.className = "estado";
     estado.textContent = enIngles() ? "Sending…" : "Enviando…";
@@ -291,6 +315,9 @@ import { SITE } from "../site";
         body: datos,
       });
       if (!res.ok) throw new Error();
+      try {
+        localStorage.setItem(CLAVE_ULTIMO_ENVIO, String(Date.now()));
+      } catch {}
       form.reset();
       mostrarPendiente();
       estado.textContent = enIngles() ? "✓ Message sent. Thank you!" : "✓ Mensaje enviado. ¡Gracias!";
