@@ -15,7 +15,7 @@ export const SITE = {
   // OAuth» → tipo «Aplicación web» → en «Orígenes de JavaScript autorizados» añade
   // http://localhost:4321 y https://fotolucia.github.io. Pega aquí el ID que te da (termina en
   // ".apps.googleusercontent.com"). Hasta entonces el formulario no puede enviarse.
-  googleClientId: "REEMPLAZAR.apps.googleusercontent.com",
+  googleClientId: "84143366554-lpsbnqu9gm7g331460jgl4ul4ha44uhk.apps.googleusercontent.com",
 };
 
 // Añade la subcarpeta de GitHub Pages a enlaces e imágenes, si la hay: url("/blog")
